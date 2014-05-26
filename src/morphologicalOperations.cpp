@@ -7,12 +7,16 @@ using namespace std;
 
 int** imageDilation(int[][5], int[][3]);
 int** imageErosion(int[][5], int[][3]);
+int** imageOpening(int inIm[][5], int mask[][3]);
+int** imageClosing(int inIm[][5], int mask[][3]);
 int** gradDilationErosion(int inIm[][5], int mask[][3]);
 int freeMemory(int**);
 
 int main() {
    int **dilatada;   // dilated image
    int **erosionada; // eroded image
+   int **apertura;   // opened image
+   int **cerradura;  // closed image
    int **gradiente;  // gradient: dilated - eroded
    
    int image[5][5] = {{0, 0, 0, 0, 0}, 
@@ -38,6 +42,10 @@ int main() {
    dilatada = imageDilation(image, mascara2);
 
    erosionada = imageErosion(image, mascara2);
+
+   apertura = imageOpening(image, mascara2);
+
+   cerradura = imageClosing(image, mascara2);
 
    gradiente = gradDilationErosion(image, mascara2);
 
@@ -80,6 +88,28 @@ int main() {
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
          //cout << dilatada[a][b] << " ";
+         cout << cerradura[a][b] << " ";
+         //cout << gradiente[a][b] << " ";
+      }  // end for
+      cout << endl;
+   }  // end for
+
+   cout << endl;
+
+   for (int a = 0; a <= 4; ++a) {
+      for (int b = 0; b <= 4; ++b) {
+         //cout << dilatada[a][b] << " ";
+         cout << apertura[a][b] << " ";
+         //cout << gradiente[a][b] << " ";
+      }  // end for
+      cout << endl;
+   }  // end for
+
+   cout << endl;
+
+   for (int a = 0; a <= 4; ++a) {
+      for (int b = 0; b <= 4; ++b) {
+         //cout << dilatada[a][b] << " ";
          //cout << erosionada[a][b] << " ";
          cout << gradiente[a][b] << " ";
       }  // end for
@@ -91,6 +121,8 @@ int main() {
 
    freeMemory(dilatada);
    freeMemory(erosionada);
+   freeMemory(apertura);
+   freeMemory(cerradura);
    freeMemory(gradiente);
 
 }  // end main
@@ -167,6 +199,60 @@ int** imageErosion(int inIm[][5], int mask[][3]) {
    return eIm;
 
 }  // end imageErosion function
+
+// Opening
+int** imageOpening(int inIm[][5], int mask[][3]) {
+   int **oIm;  // Opened image
+   //int **dIm;   // Dilated image
+   int **eIm;   // Eroded image
+   int aux[5][5];
+
+   oIm = (int**)calloc(5, sizeof(int*));
+
+   for (int i = 0; i < 5; ++i)
+      oIm[i] = (int*)calloc(5, sizeof(int));
+
+   // algorithm: first erode then dilate
+   eIm = imageErosion(inIm, mask);
+   for (size_t i = 0; i < 5; ++i) {
+      for (size_t j = 0; j < 5; ++j) {
+         aux[i][j] = eIm[i][j];
+      }  // end for
+   }  // end for
+   oIm = imageDilation(aux, mask);  // TODO: fix memory leakage
+   
+   //freeMemory(dIm);
+   freeMemory(eIm);
+
+   return oIm;
+}  // end imageOpening function
+
+// Closing
+int** imageClosing(int inIm[][5], int mask[][3]) {
+   int **cIm;  // Closed image
+   int **dIm;   // Dilated image
+   //int **eIm;   // Eroded image
+   int aux[5][5];
+
+   cIm = (int**)calloc(5, sizeof(int*));
+
+   for (int i = 0; i < 5; ++i)
+      cIm[i] = (int*)calloc(5, sizeof(int));
+
+   // algorithm: first dilate then erode
+   dIm = imageDilation(inIm, mask);
+   for (size_t i = 0; i < 5; ++i) {
+      for (size_t j = 0; j < 5; ++j) {
+         aux[i][j] = dIm[i][j];
+      }  // end for
+   }  // end for
+   cIm = imageErosion(aux, mask);   // TODO: fix memory leakage
+
+   freeMemory(dIm);
+   //freeMemory(eIm);
+
+   return cIm;
+}  // end imageClosing function
 
 // Gradient: Dilation - Erosion
 int** gradDilationErosion(int inIm[][5], int mask[][3]) {
