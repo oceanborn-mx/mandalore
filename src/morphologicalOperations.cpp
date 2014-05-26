@@ -1,11 +1,11 @@
 // morphologicalOperations.cpp
-// Computes the morphologic operator upon an image
+// Computes the morphological operator upon an image
 // **first draft** may contain bugs
 #include <iostream>
 #include <stdlib.h>
 using namespace std;
 
-int** dImilation(int [][5], int [][3]);
+int** imageDilation(int [][5], int [][3]);
 int freeMemory(int**);
 
 int main() {
@@ -20,7 +20,7 @@ int main() {
 
 
    int image[5][5] = {{0, 0, 0, 0, 0}, 
-                      {0, 0, 1, 0, 0}, 
+                      {0, 0, 0, 0, 0}, 
                       {0, 0, 1, 1, 0}, 
                       {0, 0, 0, 0, 0}, 
                       {0, 0, 0, 0, 0}};
@@ -35,7 +35,7 @@ int main() {
    //for (int i = 0; i < 5; ++i)
    //   dilatada[i] = (int*)calloc(5, sizeof(int));
 
-   dilatada = dImilation(image, mascara);
+   dilatada = imageDilation(image, mascara);
 
    for (size_t i = 0; i < 5 - 2; ++i) {
       for (size_t j = 0; j < 5 - 2; ++j) {
@@ -80,7 +80,7 @@ int main() {
 
 
 // Dilation
-int** dImilation(int inIm[][5], int mask[][3]) {
+int** imageDilation(int inIm[][5], int mask[][3]) {
    int** dIm;   // Dilated image
    int m, n;
    int r, s;
@@ -121,7 +121,7 @@ int** dImilation(int inIm[][5], int mask[][3]) {
    }  // end for
    cout << "algoritnmo" << endl;;
    return dIm;
-}  // end dImilation function
+}  // end imageDilation function
 
 int freeMemory(int** blockImage) {
 
