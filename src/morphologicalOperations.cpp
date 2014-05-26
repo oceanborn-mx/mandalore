@@ -7,16 +7,18 @@ using namespace std;
 
 int** imageDilation(int[][5], int[][3]);
 int** imageErosion(int[][5], int[][3]);
+int** gradDilationErosion(int inIm[][5], int mask[][3]);
 int freeMemory(int**);
 
 int main() {
    int **dilatada;   // dilated image
    int **erosionada; // eroded image
+   int **gradiente;  // gradient: dilated - eroded
    
    int image[5][5] = {{0, 0, 0, 0, 0}, 
-                      {0, 0, 0, 0, 0}, 
-                      {0, 0, 1, 1, 0}, 
-                      {0, 0, 0, 0, 0}, 
+                      {0, 1, 1, 1, 0}, 
+                      {0, 1, 1, 1, 0}, 
+                      {0, 1, 1, 1, 0}, 
                       {0, 0, 0, 0, 0}};
 
    int image2[5][5] = {{0, 1, 1, 1, 0}, 
@@ -27,11 +29,17 @@ int main() {
 
    int mascara[3][3] = {{1, 1, 1}, 
                         {1, 1, 1}, 
-                        {1, 1, 1}}; 
+                        {1, 1, 1}};
 
-   dilatada = imageDilation(image, mascara);
+   int mascara2[3][3] = {{0, 1, 0}, 
+                         {1, 1, 1}, 
+                         {0, 1, 0}};
 
-   erosionada = imageErosion(image2, mascara);
+   dilatada = imageDilation(image, mascara2);
+
+   erosionada = imageErosion(image, mascara2);
+
+   gradiente = gradDilationErosion(image, mascara2);
 
    //for (size_t i = 0; i < 5 - 2; ++i) {
    //   for (size_t j = 0; j < 5 - 2; ++j) {
@@ -46,20 +54,44 @@ int main() {
    //      cout << endl;
    //   }  // end for
    //}  // end for
+   //
+   for (int a = 0; a <= 4; ++a) {
+      for (int b = 0; b <= 4; ++b) {
+         cout << dilatada[a][b] << " ";
+         //cout << erosionada[a][b] << " ";
+         //cout << gradiente[a][b] << " ";
+      }  // end for
+      cout << endl;
+   }  // end for
+
+   cout << endl;
 
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
          //cout << dilatada[a][b] << " ";
          cout << erosionada[a][b] << " ";
+         //cout << gradiente[a][b] << " ";
+      }  // end for
+      cout << endl;
+   }  // end for
+
+   cout << endl;
+
+   for (int a = 0; a <= 4; ++a) {
+      for (int b = 0; b <= 4; ++b) {
+         //cout << dilatada[a][b] << " ";
+         //cout << erosionada[a][b] << " ";
+         cout << gradiente[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
    
-   cout << "~1 " << ~0 << endl; 
-   cout << "!1 " << !1 << endl; 
+   //cout << "~1 " << ~1 << endl; 
+   //cout << "!1 " << !1 << endl; 
 
    freeMemory(dilatada);
    freeMemory(erosionada);
+   freeMemory(gradiente);
 
 }  // end main
 
@@ -86,21 +118,12 @@ int** imageDilation(int inIm[][5], int mask[][3]) {
          if (inIm[i+1][j+1] & mask[1][1]) {
             for (size_t m = 0 + i; m < 1 + i - 0; ++m) {
                for (size_t n = 0 + j; n < 1 + j - 0; ++n) {
-                  dIm[m+0][n+0] = mask[0][0], dIm[m+0][n+1] = mask[0][1], dIm[m+0][n+2] = mask[0][2];
-                  dIm[m+1][n+0] = mask[1][0], dIm[m+1][n+1] = mask[1][1], dIm[m+1][n+2] = mask[1][2];
-                  dIm[m+2][n+0] = mask[2][0], dIm[m+2][n+1] = mask[2][1], dIm[m+2][n+2] = mask[2][2];
+                  dIm[m+0][n+0] |= mask[0][0], dIm[m+0][n+1] |= mask[0][1], dIm[m+0][n+2] |= mask[0][2];
+                  dIm[m+1][n+0] |= mask[1][0], dIm[m+1][n+1]  = mask[1][1], dIm[m+1][n+2] |= mask[1][2];
+                  dIm[m+2][n+0] |= mask[2][0], dIm[m+2][n+1] |= mask[2][1], dIm[m+2][n+2] |= mask[2][2];
                }  // end for
             }  // end for
          }  // end if
-         //else {
-         //   for (m = 0 + i; m < 1 + i - 0; ++m) {
-         //      for (n = 0 + j; n < 1 + j - 0; ++n) {
-         //         dIm[m+0][n+0] = inIm[m+0][n+0], dIm[m+0][n+1] = inIm[m+0][n+1], dIm[m+0][n+2] = inIm[m+0][n+2];
-         //         dIm[m+1][n+0] = inIm[m+1][n+0], dIm[m+1][n+1] = inIm[m+1][n+1], dIm[m+1][n+2] = inIm[m+1][n+2];
-         //         dIm[m+2][n+0] = inIm[m+2][n+0], dIm[m+2][n+1] = inIm[m+2][n+1], dIm[m+2][n+2] = inIm[m+2][n+2];
-         //      }  // end for
-         //   }  // end for
-         //}  // end else
       }  // end for
    }  // end for
    cout << "dilation algorithm" << endl;
@@ -119,16 +142,21 @@ int** imageErosion(int inIm[][5], int mask[][3]) {
 
    // Erosion algorithm
    for (size_t i = 0; i < 5 - 2; ++i) {
-      for (size_t j = 0; j < 5 - 2; ++j) {
-         if ((inIm[i+0][j+0] & mask[0][0]) & (inIm[i+0][j+1] & mask[0][1]) & (inIm[i+0][j+2] & mask[0][2]) &
+      for (size_t j = 0; j < 5 - 2; ++j) {   
+         // TODO: find a way, if any, to make generic the decision mechanism considering any mask
+         // Mask 1
+         //if ((inIm[i+0][j+0] & mask[0][0]) & (inIm[i+0][j+1] & mask[0][1]) & (inIm[i+0][j+2] & mask[0][2]) &
+         //    (inIm[i+1][j+0] & mask[1][0]) & (inIm[i+1][j+1] & mask[1][1]) & (inIm[i+1][j+2] & mask[1][2]) &
+         //    (inIm[i+2][j+0] & mask[2][0]) & (inIm[i+2][j+1] & mask[2][1]) & (inIm[i+2][j+2] & mask[2][2])) {
+         // Mask 2
+         if (/*(inIm[i+0][j+0] & mask[0][0]) & */(inIm[i+0][j+1] & mask[0][1]) /* & (inIm[i+0][j+2] & mask[0][2])*/ &
              (inIm[i+1][j+0] & mask[1][0]) & (inIm[i+1][j+1] & mask[1][1]) & (inIm[i+1][j+2] & mask[1][2]) &
-             (inIm[i+2][j+0] & mask[2][0]) & (inIm[i+2][j+1] & mask[2][1]) & (inIm[i+2][j+2] & mask[2][2])) {
+             /*(inIm[i+2][j+0] & mask[2][0]) & */(inIm[i+2][j+1] & mask[2][1]) /*& (inIm[i+2][j+2] & mask[2][2])*/) {
             for (size_t m = 0 + i; m < 1 + i - 0; ++m) {
                for (size_t n = 0 + j; n < 1 + j - 0; ++n) {
                   eIm[m+0][n+0] |= !mask[0][0], eIm[m+0][n+1] |= !mask[0][1], eIm[m+0][n+2] |= !mask[0][2];
                   eIm[m+1][n+0] |= !mask[1][0], eIm[m+1][n+1]  =  mask[1][1], eIm[m+1][n+2] |= !mask[1][2];
                   eIm[m+2][n+0] |= !mask[2][0], eIm[m+2][n+1] |= !mask[2][1], eIm[m+2][n+2] |= !mask[2][2];
-                  cout << "*erosion* " << m << n;
                }  // end for
             }  // end for
          }  // end if
@@ -139,6 +167,33 @@ int** imageErosion(int inIm[][5], int mask[][3]) {
    return eIm;
 
 }  // end imageErosion function
+
+// Gradient: Dilation - Erosion
+int** gradDilationErosion(int inIm[][5], int mask[][3]) {
+   int **grad; // gradient
+   int **dIm;   // Dilated image
+   int **eIm;   // Eroded image
+
+   grad = (int**)calloc(5, sizeof(int*));
+
+   for (int i = 0; i < 5; ++i)
+      grad[i] = (int*)calloc(5, sizeof(int));
+
+   dIm = imageDilation(inIm, mask);
+   eIm = imageErosion(inIm, mask);
+
+   // algorith: Dilated - Eroded
+   for (size_t i = 0; i < 5; ++i) {
+      for (size_t j = 0; j < 5; ++j) {
+         grad[i][j] = dIm[i][j] & !eIm[i][j]; 
+      }  // end for
+   }  // end for
+
+   freeMemory(dIm);
+   freeMemory(eIm);
+
+   return grad;
+}  // end gradDilationErosion function
 
 int freeMemory(int** blockImage) {
 
