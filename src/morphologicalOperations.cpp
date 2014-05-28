@@ -44,12 +44,12 @@ int main() {
 
    image1 = setMemoryAllocation(image1, width, height);
    int aux1[width][height] = {{0, 0, 0, 0, 0, 0, 0}, 
-                     {0, 0, 0, 0, 0, 0, 0}, 
-                     {0, 0, 1, 1, 1, 1, 0}, 
-                     {0, 0, 1, 1, 1, 1, 0},
-                     {0, 0, 1, 1, 1, 1, 0},
-                     {0, 0, 1, 1, 1, 1, 0},
-                     {0, 0, 0, 0, 0, 0, 0}};
+                              {0, 0, 0, 0, 0, 0, 0}, 
+                              {0, 0, 1, 1, 1, 1, 0}, 
+                              {0, 0, 1, 1, 1, 1, 0},
+                              {0, 0, 1, 1, 1, 1, 0},
+                              {0, 0, 1, 1, 1, 1, 0},
+                              {0, 0, 0, 0, 0, 0, 0}};
    for (size_t i = 0; i < width; ++i) {
       for (size_t j = 0; j < height; ++j) {
          image1->pixel[i][j] = aux1[i][j];
@@ -60,12 +60,12 @@ int main() {
    
    image2 = setMemoryAllocation(image2, width, height);
    int aux2[width][height] = {{0, 1, 1, 1, 0, 0, 0},
-                     {0, 1, 1, 1, 0, 0, 0}, 
-                     {0, 1, 1, 1, 0, 0, 0}, 
-                     {0, 1, 1, 1, 0, 0, 0}, 
-                     {0, 0, 0, 0, 0, 0, 0},
-                     {0, 0, 0, 0, 0, 0, 0},
-                     {0, 0, 0, 0, 0, 0, 0}};
+                              {0, 1, 1, 1, 0, 0, 0}, 
+                              {0, 1, 1, 1, 0, 0, 0}, 
+                              {0, 1, 1, 1, 0, 0, 0}, 
+                              {0, 0, 0, 0, 0, 0, 0},
+                              {0, 0, 0, 0, 0, 0, 0},
+                              {0, 0, 0, 0, 0, 0, 0}};
    for (size_t i = 0; i < width; ++i) {
       for (size_t j = 0; j < height; ++j) {
          image2->pixel[i][j] = aux2[i][j];
@@ -210,7 +210,6 @@ Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
    cout << "*debug* erosion algorithm" << endl;
    
    return eIm;
-
 }  // end imageErosion function
 
 // Opening
