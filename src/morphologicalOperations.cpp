@@ -12,6 +12,10 @@ typedef struct {
    int **pixel;   // image nRows x nCols
 } Image2D;
 
+// image constants
+const int width  = 7;   // image width
+const int height = 7;   // image height
+
 // prototypes
 Image2D* imageDilation(Image2D*, Image2D*);
 Image2D* imageErosion(Image2D*, Image2D*);
@@ -38,28 +42,32 @@ int main() {
 
    cout << "*debug* before setting test images and masks" << endl;
 
-   image1 = setMemoryAllocation(image1, 5, 5);
-   int aux1[5][5] = {{0, 0, 0, 0, 0}, 
-                     {0, 1, 1, 1, 0}, 
-                     {0, 1, 1, 1, 0}, 
-                     {0, 1, 1, 1, 0}, 
-                     {0, 0, 0, 0, 0}};
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
+   image1 = setMemoryAllocation(image1, width, height);
+   int aux1[width][height] = {{0, 0, 0, 0, 0, 0, 0}, 
+                     {0, 0, 0, 0, 0, 0, 0}, 
+                     {0, 0, 1, 1, 1, 1, 0}, 
+                     {0, 0, 1, 1, 1, 1, 0},
+                     {0, 0, 1, 1, 1, 1, 0},
+                     {0, 0, 1, 1, 1, 1, 0},
+                     {0, 0, 0, 0, 0, 0, 0}};
+   for (size_t i = 0; i < width; ++i) {
+      for (size_t j = 0; j < height; ++j) {
          image1->pixel[i][j] = aux1[i][j];
       }  // end for
    }  // end for
    
    cout << "*debug* after setting image1" << endl;
    
-   image2 = setMemoryAllocation(image2, 5, 5);
-   int aux2[5][5] = {{0, 1, 1, 1, 0},
-                     {0, 1, 1, 1, 0}, 
-                     {0, 1, 1, 1, 0}, 
-                     {0, 1, 1, 1, 0}, 
-                     {0, 0, 0, 0, 0}};
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
+   image2 = setMemoryAllocation(image2, width, height);
+   int aux2[width][height] = {{0, 1, 1, 1, 0, 0, 0},
+                     {0, 1, 1, 1, 0, 0, 0}, 
+                     {0, 1, 1, 1, 0, 0, 0}, 
+                     {0, 1, 1, 1, 0, 0, 0}, 
+                     {0, 0, 0, 0, 0, 0, 0},
+                     {0, 0, 0, 0, 0, 0, 0},
+                     {0, 0, 0, 0, 0, 0, 0}};
+   for (size_t i = 0; i < width; ++i) {
+      for (size_t j = 0; j < height; ++j) {
          image2->pixel[i][j] = aux2[i][j];
       }  // end for
    }  // end for
@@ -86,6 +94,7 @@ int main() {
 
    cout << "*debug* before operations" << endl;
 
+   // Digital Signal Processing
    dilatada = imageDilation(image1, mascara2);
 
    erosionada = imageErosion(image1, mascara2);
@@ -100,6 +109,7 @@ int main() {
    
    cout << "*debug* displaying results:" << endl;
 
+   // output results
    outputImage(dilatada);
    cout << endl;
 
@@ -147,14 +157,14 @@ Image2D* imageDilation(Image2D* inIm, Image2D* mask) {
    Image2D* dIm;   // Dilated image
 
    // dynamic memory allocation
-   dIm = setMemoryAllocation(dIm, 5, 5);
+   dIm = setMemoryAllocation(dIm, width, height);
 
    // Dilation algorithm
-   for (size_t i = 0; i < 5 - 2; ++i) {
-      for (size_t j = 0; j < 5 - 2; ++j) {
+   for (size_t i = 0; i < width - 2; ++i) {
+      for (size_t j = 0; j < height - 2; ++j) {
          if (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) {
-            for (size_t m = 0 + i; m < 1 + i - 0; ++m) {
-               for (size_t n = 0 + j; n < 1 + j - 0; ++n) {
+            for (size_t m = 0 + i; m < 1 + i; ++m) {
+               for (size_t n = 0 + j; n < 1 + j; ++n) {
                   dIm->pixel[m+0][n+0] |= mask->pixel[0][0], dIm->pixel[m+0][n+1] |= mask->pixel[0][1], dIm->pixel[m+0][n+2] |= mask->pixel[0][2];
                   dIm->pixel[m+1][n+0] |= mask->pixel[1][0], dIm->pixel[m+1][n+1]  = mask->pixel[1][1], dIm->pixel[m+1][n+2] |= mask->pixel[1][2];
                   dIm->pixel[m+2][n+0] |= mask->pixel[2][0], dIm->pixel[m+2][n+1] |= mask->pixel[2][1], dIm->pixel[m+2][n+2] |= mask->pixel[2][2];
@@ -173,11 +183,11 @@ Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
    Image2D* eIm;   // Eroded image
 
    // dynamic memory allocation
-   eIm = setMemoryAllocation(eIm, 5, 5);
+   eIm = setMemoryAllocation(eIm, width, height);
 
    // Erosion algorithm
-   for (size_t i = 0; i < 5 - 2; ++i) {
-      for (size_t j = 0; j < 5 - 2; ++j) {   
+   for (size_t i = 0; i < width - 2; ++i) {
+      for (size_t j = 0; j < height - 2; ++j) {   
          // TODO: find a way, if any, to make generic the decision mechanism considering any mask->pixel
          // Mask 1
          //if ((inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & (inIm->pixel[i+0][j+1] & mask->pixel[0][1]) & (inIm->pixel[i+0][j+2] & mask->pixel[0][2]) &
@@ -187,8 +197,8 @@ Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
          if (/*(inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & */(inIm->pixel[i+0][j+1] & mask->pixel[0][1]) /* & (inIm->pixel[i+0][j+2] & mask->pixel[0][2])*/ &
              (inIm->pixel[i+1][j+0] & mask->pixel[1][0]) & (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) & (inIm->pixel[i+1][j+2] & mask->pixel[1][2]) &
              /*(inIm->pixel[i+2][j+0] & mask->pixel[2][0]) & */(inIm->pixel[i+2][j+1] & mask->pixel[2][1]) /*& (inIm->pixel[i+2][j+2] & mask->pixel[2][2])*/) {
-            for (size_t m = 0 + i; m < 1 + i - 0; ++m) {
-               for (size_t n = 0 + j; n < 1 + j - 0; ++n) {
+            for (size_t m = 0 + i; m < 1 + i; ++m) {
+               for (size_t n = 0 + j; n < 1 + j; ++n) {
                   eIm->pixel[m+0][n+0] |= !mask->pixel[0][0], eIm->pixel[m+0][n+1] |= !mask->pixel[0][1], eIm->pixel[m+0][n+2] |= !mask->pixel[0][2];
                   eIm->pixel[m+1][n+0] |= !mask->pixel[1][0], eIm->pixel[m+1][n+1]  =  mask->pixel[1][1], eIm->pixel[m+1][n+2] |= !mask->pixel[1][2];
                   eIm->pixel[m+2][n+0] |= !mask->pixel[2][0], eIm->pixel[m+2][n+1] |= !mask->pixel[2][1], eIm->pixel[m+2][n+2] |= !mask->pixel[2][2];
@@ -240,14 +250,14 @@ Image2D* gradDilationErosion(Image2D* inIm, Image2D* mask) {
    Image2D *eIm;  // Eroded image
 
    // dynamic memory allocation
-   grad = setMemoryAllocation(grad, 5, 5);
+   grad = setMemoryAllocation(grad, 7, 7);
 
    dIm = imageDilation(inIm, mask);
    eIm = imageErosion(inIm, mask);
 
    // algorith: Dilated - Eroded
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
+   for (size_t i = 0; i < width; ++i) {
+      for (size_t j = 0; j < height; ++j) {
          grad->pixel[i][j] = dIm->pixel[i][j] & !eIm->pixel[i][j]; 
       }  // end for
    }  // end for
@@ -266,14 +276,14 @@ Image2D* gradClosingOpening(Image2D* inIm, Image2D* mask) {
    Image2D*cIm;  // Closed image
 
    // dynamic memory allocation
-   grad = setMemoryAllocation(grad, 5, 5);
+   grad = setMemoryAllocation(grad, width, height);
 
    oIm = imageOpening(inIm, mask);
    cIm = imageClosing(inIm, mask);
 
    // algorith: Closed - Opened
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
+   for (size_t i = 0; i < width; ++i) {
+      for (size_t j = 0; j < height; ++j) {
          grad->pixel[i][j] = cIm->pixel[i][j] & !oIm->pixel[i][j]; 
       }  // end for
    }  // end for
@@ -309,7 +319,7 @@ Image2D* setMemoryAllocation(Image2D* blockImage, size_t rows, size_t cols) {
 int freeMemory(Image2D* blockImage) {
 
    // freeing memory allocated
-   for (size_t k = 0; k < 5; ++k)
+   for (size_t k = 0; k < width; ++k)
       free(blockImage->pixel[k]);
    free(blockImage->pixel);
    free(blockImage);
@@ -319,8 +329,8 @@ int freeMemory(Image2D* blockImage) {
 
 int outputImage(Image2D* inImage) {
    
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
+   for (size_t i = 0; i < width; ++i) {
+      for (size_t j = 0; j < height; ++j) {
          cout << inImage->pixel[i][j] << " ";
       }  // end for
       cout << endl;
