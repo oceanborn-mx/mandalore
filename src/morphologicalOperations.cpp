@@ -5,54 +5,97 @@
 #include <stdlib.h>
 using namespace std;
 
+// 2D array structure
+typedef struct {
+   size_t nRows;    // number of rows
+   size_t nCols;    // number of columns
+   int **image;  // image nRows x nCols
+} Image2D;
+
 // prototypes
-int** imageDilation(int[][5], int[][3]);
-int** imageErosion(int[][5], int[][3]);
-int** imageOpening(int inIm[][5], int mask[][3]);
-int** imageClosing(int inIm[][5], int mask[][3]);
-int** gradDilationErosion(int inIm[][5], int mask[][3]);
-int** gradClosingOpening(int inIm[][5], int mask[][3]);
-int freeMemory(int**);
+Image2D* imageDilation(Image2D*, Image2D*);
+Image2D* imageErosion(Image2D*, Image2D*);
+Image2D* imageOpening(Image2D*, Image2D*);
+Image2D* imageClosing(Image2D*, Image2D*);
+Image2D* gradDilationErosion(Image2D*, Image2D*);
+Image2D* gradClosingOpening(Image2D*, Image2D*);
+Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
+int freeMemory(Image2D*);
 
 int main() {
-   int **dilatada;   // dilated image
-   int **erosionada; // eroded image
-   int **apertura;   // opened image
-   int **cerradura;  // closed image
-   int **gradiente;  // gradient: dilated - eroded
-   int **grad2;      // gradiente: closed - opened
+   Image2D *dilatada;   // dilated image
+   Image2D *erosionada; // eroded image
+   Image2D *apertura;   // opened image
+   Image2D *cerradura;  // closed image
+   Image2D *gradiente;  // gradient: dilated - eroded
+   Image2D *grad2;      // gradiente: closed - opened
    
-   int image[5][5] = {{0, 0, 0, 0, 0}, 
-                      {0, 1, 1, 1, 0}, 
-                      {0, 1, 1, 1, 0}, 
-                      {0, 1, 1, 1, 0}, 
-                      {0, 0, 0, 0, 0}};
+   Image2D *image1;
+   Image2D *image2;
+   Image2D *mascara1;
+   Image2D *mascara2;
 
-   int image2[5][5] = {{0, 1, 1, 1, 0}, 
-                       {0, 1, 1, 1, 0}, 
-                       {0, 1, 1, 1, 0}, 
-                       {0, 1, 1, 1, 0}, 
-                       {0, 0, 0, 0, 0}};
+   cout << "before setting test images and masks" << endl;
 
-   int mascara[3][3] = {{1, 1, 1}, 
-                        {1, 1, 1}, 
-                        {1, 1, 1}};
+   image1 = setMemoryAllocation(image1, 5, 5);
+   int aux1[5][5] = {{0, 0, 0, 0, 0}, 
+                   {0, 1, 1, 1, 0}, 
+                   {0, 1, 1, 1, 0}, 
+                   {0, 1, 1, 1, 0}, 
+                   {0, 0, 0, 0, 0}};
+   for (size_t i = 0; i < 5; ++i) {
+      for (size_t j = 0; j < 5; ++j) {
+         image1->image[i][j] = aux1[i][j];
+      }  // end for
+   }  // end for
+   
+   cout << "after setting image1" << endl;
+   
+   image2 = setMemoryAllocation(image2, 5, 5);
+   int aux2[5][5] = {{0, 1, 1, 1, 0},
+                   {0, 1, 1, 1, 0}, 
+                   {0, 1, 1, 1, 0}, 
+                   {0, 1, 1, 1, 0}, 
+                   {0, 0, 0, 0, 0}};
+   for (size_t i = 0; i < 5; ++i) {
+      for (size_t j = 0; j < 5; ++j) {
+         image2->image[i][j] = aux2[i][j];
+      }  // end for
+   }  // end for
 
-   int mascara2[3][3] = {{0, 1, 0}, 
-                         {1, 1, 1}, 
-                         {0, 1, 0}};
+   mascara1 = setMemoryAllocation(mascara1, 3, 3);
+   int aux3[3][3] = {{1, 1, 1},
+                     {1, 1, 1}, 
+                     {1, 1, 1}};
+   for (size_t i = 0; i < 3; ++i) {
+      for (size_t j = 0; j < 3; ++j) {
+         mascara1->image[i][j] = aux3[i][j];
+      }  // end for
+   }  // end for
 
-   dilatada = imageDilation(image, mascara2);
+   mascara2 = setMemoryAllocation(mascara2, 3, 3);
+   int aux4[3][3] = {{0, 1, 0}, 
+                     {1, 1, 1}, 
+                     {0, 1, 0}};
+   for (size_t i = 0; i < 3; ++i) {
+      for (size_t j = 0; j < 3; ++j) {
+         mascara2->image[i][j] = aux4[i][j];
+      }  // end for
+   }  // end for
 
-   erosionada = imageErosion(image, mascara2);
+   cout << "before operations" << endl;
 
-   apertura = imageOpening(image, mascara2);
+   dilatada = imageDilation(image1, mascara2);
 
-   cerradura = imageClosing(image, mascara2);
+   erosionada = imageErosion(image1, mascara2);
 
-   gradiente = gradDilationErosion(image, mascara2);
+   apertura = imageOpening(image1, mascara2);
 
-   grad2 = gradClosingOpening(image, mascara2);
+   cerradura = imageClosing(image1, mascara2);
+
+   gradiente = gradDilationErosion(image1, mascara2);
+
+   grad2 = gradClosingOpening(image1, mascara2);
 
    //for (size_t i = 0; i < 5 - 2; ++i) {
    //   for (size_t j = 0; j < 5 - 2; ++j) {
@@ -67,10 +110,12 @@ int main() {
    //      cout << endl;
    //   }  // end for
    //}  // end for
-   //
+   
+   cout << "displaying results:" << endl;
+
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
-         cout << dilatada[a][b] << " ";
+         cout << dilatada->image[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
@@ -79,7 +124,7 @@ int main() {
 
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
-         cout << erosionada[a][b] << " ";
+         cout << erosionada->image[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
@@ -88,7 +133,7 @@ int main() {
 
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
-         cout << cerradura[a][b] << " ";
+         cout << cerradura->image[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
@@ -97,7 +142,7 @@ int main() {
 
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
-         cout << apertura[a][b] << " ";
+         cout << apertura->image[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
@@ -106,7 +151,7 @@ int main() {
 
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
-         cout << gradiente[a][b] << " ";
+         cout << gradiente->image[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
@@ -115,13 +160,13 @@ int main() {
 
    for (int a = 0; a <= 4; ++a) {
       for (int b = 0; b <= 4; ++b) {
-         cout << grad2[a][b] << " ";
+         cout << grad2->image[a][b] << " ";
       }  // end for
       cout << endl;
    }  // end for
    
    //cout << "~1 " << ~1 << endl; 
-   //cout << "!1 " << !1 << endl; 
+   cout << "!1 " << !1 << endl; 
 
    // release memory
    freeMemory(dilatada);
@@ -141,23 +186,27 @@ int main() {
 
 
 // Dilation
-int** imageDilation(int inIm[][5], int mask[][3]) {
-   int** dIm;   // Dilated image
+Image2D* imageDilation(Image2D* inIm, Image2D* mask) {
+   Image2D* dIm;   // Dilated image
 
-   dIm = (int**)calloc(5, sizeof(int*));
+   cout << "dilation before memset" << endl;
+   dIm = setMemoryAllocation(dIm, 5, 5);
+   cout << "dilation after memset" << endl;
 
-   for (int i = 0; i < 5; ++i)
-      dIm[i] = (int*)calloc(5, sizeof(int));
+   //dIm = (Image2D*)calloc(5, sizeof(int*));
+
+   //for (int i = 0; i < 5; ++i)
+   //   dIm[i] = (int*)calloc(5, sizeof(int));
 
    // Dilation algorithm
    for (size_t i = 0; i < 5 - 2; ++i) {
       for (size_t j = 0; j < 5 - 2; ++j) {
-         if (inIm[i+1][j+1] & mask[1][1]) {
+         if (inIm->image[i+1][j+1] & mask->image[1][1]) {
             for (size_t m = 0 + i; m < 1 + i - 0; ++m) {
                for (size_t n = 0 + j; n < 1 + j - 0; ++n) {
-                  dIm[m+0][n+0] |= mask[0][0], dIm[m+0][n+1] |= mask[0][1], dIm[m+0][n+2] |= mask[0][2];
-                  dIm[m+1][n+0] |= mask[1][0], dIm[m+1][n+1]  = mask[1][1], dIm[m+1][n+2] |= mask[1][2];
-                  dIm[m+2][n+0] |= mask[2][0], dIm[m+2][n+1] |= mask[2][1], dIm[m+2][n+2] |= mask[2][2];
+                  dIm->image[m+0][n+0] |= mask->image[0][0], dIm->image[m+0][n+1] |= mask->image[0][1], dIm->image[m+0][n+2] |= mask->image[0][2];
+                  dIm->image[m+1][n+0] |= mask->image[1][0], dIm->image[m+1][n+1]  = mask->image[1][1], dIm->image[m+1][n+2] |= mask->image[1][2];
+                  dIm->image[m+2][n+0] |= mask->image[2][0], dIm->image[m+2][n+1] |= mask->image[2][1], dIm->image[m+2][n+2] |= mask->image[2][2];
                }  // end for
             }  // end for
          }  // end if
@@ -169,31 +218,33 @@ int** imageDilation(int inIm[][5], int mask[][3]) {
 }  // end imageDilation function
 
 // Erosion
-int** imageErosion(int inIm[][5], int mask[][3]) {
-   int** eIm;   // Eroded image
+Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
+   Image2D* eIm;   // Eroded image
 
-   eIm = (int**)calloc(5, sizeof(int*));
+   eIm = setMemoryAllocation(eIm, 5, 5);
 
-   for (int i = 0; i < 5; ++i)
-      eIm[i] = (int*)calloc(5, sizeof(int));
+   //eIm = (Image2D*)calloc(5, sizeof(int*));
+
+   //for (int i = 0; i < 5; ++i)
+   //   eIm[i] = (int*)calloc(5, sizeof(int));
 
    // Erosion algorithm
    for (size_t i = 0; i < 5 - 2; ++i) {
       for (size_t j = 0; j < 5 - 2; ++j) {   
-         // TODO: find a way, if any, to make generic the decision mechanism considering any mask
+         // TODO: find a way, if any, to make generic the decision mechanism considering any mask->image
          // Mask 1
-         //if ((inIm[i+0][j+0] & mask[0][0]) & (inIm[i+0][j+1] & mask[0][1]) & (inIm[i+0][j+2] & mask[0][2]) &
-         //    (inIm[i+1][j+0] & mask[1][0]) & (inIm[i+1][j+1] & mask[1][1]) & (inIm[i+1][j+2] & mask[1][2]) &
-         //    (inIm[i+2][j+0] & mask[2][0]) & (inIm[i+2][j+1] & mask[2][1]) & (inIm[i+2][j+2] & mask[2][2])) {
+         //if ((inIm->image[i+0][j+0] & mask->image[0][0]) & (inIm->image[i+0][j+1] & mask->image[0][1]) & (inIm->image[i+0][j+2] & mask->image[0][2]) &
+         //    (inIm->image[i+1][j+0] & mask->image[1][0]) & (inIm->image[i+1][j+1] & mask->image[1][1]) & (inIm->image[i+1][j+2] & mask->image[1][2]) &
+         //    (inIm->image[i+2][j+0] & mask->image[2][0]) & (inIm->image[i+2][j+1] & mask->image[2][1]) & (inIm->image[i+2][j+2] & mask->image[2][2])) {
          // Mask 2
-         if (/*(inIm[i+0][j+0] & mask[0][0]) & */(inIm[i+0][j+1] & mask[0][1]) /* & (inIm[i+0][j+2] & mask[0][2])*/ &
-             (inIm[i+1][j+0] & mask[1][0]) & (inIm[i+1][j+1] & mask[1][1]) & (inIm[i+1][j+2] & mask[1][2]) &
-             /*(inIm[i+2][j+0] & mask[2][0]) & */(inIm[i+2][j+1] & mask[2][1]) /*& (inIm[i+2][j+2] & mask[2][2])*/) {
+         if (/*(inIm->image[i+0][j+0] & mask->image[0][0]) & */(inIm->image[i+0][j+1] & mask->image[0][1]) /* & (inIm->image[i+0][j+2] & mask->image[0][2])*/ &
+             (inIm->image[i+1][j+0] & mask->image[1][0]) & (inIm->image[i+1][j+1] & mask->image[1][1]) & (inIm->image[i+1][j+2] & mask->image[1][2]) &
+             /*(inIm->image[i+2][j+0] & mask->image[2][0]) & */(inIm->image[i+2][j+1] & mask->image[2][1]) /*& (inIm->image[i+2][j+2] & mask->image[2][2])*/) {
             for (size_t m = 0 + i; m < 1 + i - 0; ++m) {
                for (size_t n = 0 + j; n < 1 + j - 0; ++n) {
-                  eIm[m+0][n+0] |= !mask[0][0], eIm[m+0][n+1] |= !mask[0][1], eIm[m+0][n+2] |= !mask[0][2];
-                  eIm[m+1][n+0] |= !mask[1][0], eIm[m+1][n+1]  =  mask[1][1], eIm[m+1][n+2] |= !mask[1][2];
-                  eIm[m+2][n+0] |= !mask[2][0], eIm[m+2][n+1] |= !mask[2][1], eIm[m+2][n+2] |= !mask[2][2];
+                  eIm->image[m+0][n+0] |= !mask->image[0][0], eIm->image[m+0][n+1] |= !mask->image[0][1], eIm->image[m+0][n+2] |= !mask->image[0][2];
+                  eIm->image[m+1][n+0] |= !mask->image[1][0], eIm->image[m+1][n+1]  =  mask->image[1][1], eIm->image[m+1][n+2] |= !mask->image[1][2];
+                  eIm->image[m+2][n+0] |= !mask->image[2][0], eIm->image[m+2][n+1] |= !mask->image[2][1], eIm->image[m+2][n+2] |= !mask->image[2][2];
                }  // end for
             }  // end for
          }  // end if
@@ -206,24 +257,19 @@ int** imageErosion(int inIm[][5], int mask[][3]) {
 }  // end imageErosion function
 
 // Opening
-int** imageOpening(int inIm[][5], int mask[][3]) {
-   int **oIm;  // Opened image
-   int **eIm;  // Eroded image
-   int aux[5][5];
+Image2D* imageOpening(Image2D* inIm, Image2D* mask) {
+   Image2D*oIm;  // Opened image
+   Image2D*eIm;  // Eroded image
 
-   oIm = (int**)calloc(5, sizeof(int*));
+   //setMemoryAllocation();
+   //oIm = (Image2D*)calloc(5, sizeof(int*));
 
-   for (int i = 0; i < 5; ++i)
-      oIm[i] = (int*)calloc(5, sizeof(int));
+   //for (int i = 0; i < 5; ++i)
+   //   oIm[i] = (int*)calloc(5, sizeof(int));
 
    // algorithm: first erode then dilate
    eIm = imageErosion(inIm, mask);
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
-         aux[i][j] = eIm[i][j];  // TODO: optimize
-      }  // end for
-   }  // end for
-   oIm = imageDilation(aux, mask);  // TODO: fix memory leakage
+   oIm = imageDilation(eIm, mask);  // TODO: fix memory leakage
    
    // release memory
    freeMemory(eIm);
@@ -232,24 +278,18 @@ int** imageOpening(int inIm[][5], int mask[][3]) {
 }  // end imageOpening function
 
 // Closing
-int** imageClosing(int inIm[][5], int mask[][3]) {
-   int **cIm;  // Closed image
-   int **dIm;  // Dilated image
-   int aux[5][5];
+Image2D* imageClosing(Image2D* inIm, Image2D* mask) {
+   Image2D*cIm;  // Closed image
+   Image2D*dIm;  // Dilated image
 
-   cIm = (int**)calloc(5, sizeof(int*));
+   //cIm = (Image2D*)calloc(5, sizeof(int*));
 
-   for (int i = 0; i < 5; ++i)
-      cIm[i] = (int*)calloc(5, sizeof(int));
+   //for (int i = 0; i < 5; ++i)
+   //   cIm[i] = (int*)calloc(5, sizeof(int));
 
    // algorithm: first dilate then erode
    dIm = imageDilation(inIm, mask);
-   for (size_t i = 0; i < 5; ++i) {
-      for (size_t j = 0; j < 5; ++j) {
-         aux[i][j] = dIm[i][j];  // TODO: optimize
-      }  // end for
-   }  // end for
-   cIm = imageErosion(aux, mask);   // TODO: fix memory leakage
+   cIm = imageErosion(dIm, mask);   // TODO: fix memory leakage
 
    // release memory
    freeMemory(dIm);
@@ -258,15 +298,17 @@ int** imageClosing(int inIm[][5], int mask[][3]) {
 }  // end imageClosing function
 
 // Gradient: Dilation - Erosion
-int** gradDilationErosion(int inIm[][5], int mask[][3]) {
-   int **grad; // gradient
-   int **dIm;  // Dilated image
-   int **eIm;  // Eroded image
+Image2D* gradDilationErosion(Image2D* inIm, Image2D* mask) {
+   Image2D*grad; // gradient
+   Image2D*dIm;  // Dilated image
+   Image2D*eIm;  // Eroded image
 
-   grad = (int**)calloc(5, sizeof(int*));
+   grad = setMemoryAllocation(grad, 5, 5);
 
-   for (int i = 0; i < 5; ++i)
-      grad[i] = (int*)calloc(5, sizeof(int));
+   //grad = (Image2D*)calloc(5, sizeof(int*));
+
+   //for (int i = 0; i < 5; ++i)
+   //   grad[i] = (int*)calloc(5, sizeof(int));
 
    dIm = imageDilation(inIm, mask);
    eIm = imageErosion(inIm, mask);
@@ -274,7 +316,7 @@ int** gradDilationErosion(int inIm[][5], int mask[][3]) {
    // algorith: Dilated - Eroded
    for (size_t i = 0; i < 5; ++i) {
       for (size_t j = 0; j < 5; ++j) {
-         grad[i][j] = dIm[i][j] & !eIm[i][j]; 
+         grad->image[i][j] = dIm->image[i][j] & !eIm->image[i][j]; 
       }  // end for
    }  // end for
 
@@ -286,15 +328,17 @@ int** gradDilationErosion(int inIm[][5], int mask[][3]) {
 }  // end gradDilationErosion function
 
 // Gradient: Closing - Opening
-int** gradClosingOpening(int inIm[][5], int mask[][3]) {
-   int **grad; // gradient
-   int **oIm;  // Opened image
-   int **cIm;  // Closed image
+Image2D* gradClosingOpening(Image2D* inIm, Image2D* mask) {
+   Image2D*grad; // gradient
+   Image2D*oIm;  // Opened image
+   Image2D*cIm;  // Closed image
 
-   grad = (int**)calloc(5, sizeof(int*));
+   grad = setMemoryAllocation(grad, 5, 5);
 
-   for (int i = 0; i < 5; ++i)
-      grad[i] = (int*)calloc(5, sizeof(int));
+   //grad = (Image2D*)calloc(5, sizeof(int*));
+
+   //for (int i = 0; i < 5; ++i)
+   //   grad[i] = (int*)calloc(5, sizeof(int));
 
    oIm = imageOpening(inIm, mask);
    cIm = imageClosing(inIm, mask);
@@ -302,7 +346,7 @@ int** gradClosingOpening(int inIm[][5], int mask[][3]) {
    // algorith: Closed - Opened
    for (size_t i = 0; i < 5; ++i) {
       for (size_t j = 0; j < 5; ++j) {
-         grad[i][j] = cIm[i][j] & !oIm[i][j]; 
+         grad->image[i][j] = cIm->image[i][j] & !oIm->image[i][j]; 
       }  // end for
    }  // end for
 
@@ -313,12 +357,32 @@ int** gradClosingOpening(int inIm[][5], int mask[][3]) {
    return grad;
 }  // end gradClosingOpening function
 
-// release memory
-int freeMemory(int** blockImage) {
+// set dynamic memory allocation
+Image2D* setMemoryAllocation(Image2D* blockImage, size_t rows, size_t cols) {
 
-   for (size_t i = 0; i < 5; ++i)
-      free(blockImage[i]);
+   blockImage = (Image2D*)calloc(1, sizeof(Image2D));
+
+   // sizing array 2D
+   blockImage->nRows = rows;
+   blockImage->nCols = cols;
+
+   // dynamic memory allocation
+   blockImage->image = (int**)calloc(blockImage->nRows, sizeof(int*));
+
+   for (size_t k = 0; k < blockImage->nRows; ++k) {
+      blockImage->image[k] = (int*)calloc(blockImage->nCols, sizeof(int));
+   }  // end for
+
+   return blockImage;
+}  // end setMemoryAllocation function
+
+// release memory
+int freeMemory(Image2D* blockImage) {
+
+   for (size_t k = 0; k < 5; ++k)
+      free(blockImage->image[k]);
+   free(blockImage->image);
    free(blockImage);
 
-   return 0;
-}
+   return 0;   // success
+}  // end freeMemory function
