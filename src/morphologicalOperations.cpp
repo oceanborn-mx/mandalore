@@ -9,7 +9,7 @@ using namespace std;
 typedef struct {
    size_t nRows;  // number of rows
    size_t nCols;  // number of columns
-   int **pixel;   // pixel nRows x nCols
+   int **pixel;   // image nRows x nCols
 } Image2D;
 
 // prototypes
@@ -21,6 +21,7 @@ Image2D* gradDilationErosion(Image2D*, Image2D*);
 Image2D* gradClosingOpening(Image2D*, Image2D*);
 Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
+int outputImage(Image2D* inImage);
 
 int main() {
    Image2D *dilatada;   // dilated pixel
@@ -35,7 +36,7 @@ int main() {
    Image2D *mascara1;   // mask (structuring element)
    Image2D *mascara2;   // mask (structuring element)
 
-   cout << "*debug* before setting test pixels and masks" << endl;
+   cout << "*debug* before setting test images and masks" << endl;
 
    image1 = setMemoryAllocation(image1, 5, 5);
    int aux1[5][5] = {{0, 0, 0, 0, 0}, 
@@ -49,7 +50,7 @@ int main() {
       }  // end for
    }  // end for
    
-   cout << "*debug* after setting pixel1" << endl;
+   cout << "*debug* after setting image1" << endl;
    
    image2 = setMemoryAllocation(image2, 5, 5);
    int aux2[5][5] = {{0, 1, 1, 1, 0},
@@ -96,61 +97,25 @@ int main() {
    gradiente = gradDilationErosion(image1, mascara2);
 
    grad2 = gradClosingOpening(image1, mascara2);
-
    
    cout << "*debug* displaying results:" << endl;
 
-   for (int a = 0; a <= 4; ++a) {
-      for (int b = 0; b <= 4; ++b) {
-         cout << dilatada->pixel[a][b] << " ";
-      }  // end for
-      cout << endl;
-   }  // end for
-
+   outputImage(dilatada);
    cout << endl;
 
-   for (int a = 0; a <= 4; ++a) {
-      for (int b = 0; b <= 4; ++b) {
-         cout << erosionada->pixel[a][b] << " ";
-      }  // end for
-      cout << endl;
-   }  // end for
-
+   outputImage(erosionada);
    cout << endl;
 
-   for (int a = 0; a <= 4; ++a) {
-      for (int b = 0; b <= 4; ++b) {
-         cout << cerradura->pixel[a][b] << " ";
-      }  // end for
-      cout << endl;
-   }  // end for
-
+   outputImage(cerradura);
    cout << endl;
 
-   for (int a = 0; a <= 4; ++a) {
-      for (int b = 0; b <= 4; ++b) {
-         cout << apertura->pixel[a][b] << " ";
-      }  // end for
-      cout << endl;
-   }  // end for
-
+   outputImage(apertura);
    cout << endl;
 
-   for (int a = 0; a <= 4; ++a) {
-      for (int b = 0; b <= 4; ++b) {
-         cout << gradiente->pixel[a][b] << " ";
-      }  // end for
-      cout << endl;
-   }  // end for
-
+   outputImage(gradiente);
    cout << endl;
 
-   for (int a = 0; a <= 4; ++a) {
-      for (int b = 0; b <= 4; ++b) {
-         cout << grad2->pixel[a][b] << " ";
-      }  // end for
-      cout << endl;
-   }  // end for
+   outputImage(grad2);
    
    // release memory
    freeMemory(dilatada);
@@ -351,3 +316,15 @@ int freeMemory(Image2D* blockImage) {
 
    return 0;   // success
 }  // end freeMemory function
+
+int outputImage(Image2D* inImage) {
+   
+   for (size_t i = 0; i < 5; ++i) {
+      for (size_t j = 0; j < 5; ++j) {
+         cout << inImage->pixel[i][j] << " ";
+      }  // end for
+      cout << endl;
+   }  // end for
+
+   return 0;   // success
+}  // end outputImage function
