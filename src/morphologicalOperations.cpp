@@ -13,8 +13,8 @@ typedef struct {
 } Image2D;
 
 // image constants
-const int width  = 7;   // image width
-const int height = 7;   // image height
+const int width  = 9;   // image width
+const int height = 9;   // image height
 
 // prototypes
 Image2D* imageDilation(Image2D*, Image2D*);
@@ -43,13 +43,15 @@ int main() {
    cout << "*debug* before setting test images and masks" << endl;
 
    image1 = setMemoryAllocation(image1, width, height);
-   int aux1[width][height] = {{0, 0, 0, 0, 0, 0, 0}, 
-                              {0, 0, 0, 0, 0, 0, 0}, 
-                              {0, 0, 1, 1, 1, 1, 0}, 
-                              {0, 0, 1, 1, 1, 1, 0},
-                              {0, 0, 1, 1, 1, 1, 0},
-                              {0, 0, 1, 1, 1, 1, 0},
-                              {0, 0, 0, 0, 0, 0, 0}};
+   int aux1[width][height] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+                              {0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+                              {0, 0, 1, 1, 1, 1, 1, 0, 0}, 
+                              {0, 0, 1, 1, 1, 1, 1, 0, 0},
+                              {0, 0, 1, 1, 1, 1, 1, 0, 0},
+                              {0, 0, 1, 1, 1, 1, 1, 0, 0},
+                              {0, 0, 1, 1, 1, 1, 1, 0, 0}, 
+                              {0, 0, 0, 0, 0, 0, 0, 0, 0},
+                              {0, 0, 0, 0, 0, 0, 0, 0, 0}};
    for (size_t i = 0; i < width; ++i) {
       for (size_t j = 0; j < height; ++j) {
          image1->pixel[i][j] = aux1[i][j];
@@ -59,13 +61,15 @@ int main() {
    cout << "*debug* after setting image1" << endl;
    
    image2 = setMemoryAllocation(image2, width, height);
-   int aux2[width][height] = {{0, 1, 1, 1, 0, 0, 0},
-                              {0, 1, 1, 1, 0, 0, 0}, 
-                              {0, 1, 1, 1, 0, 0, 0}, 
-                              {0, 1, 1, 1, 0, 0, 0}, 
-                              {0, 0, 0, 0, 0, 0, 0},
-                              {0, 0, 0, 0, 0, 0, 0},
-                              {0, 0, 0, 0, 0, 0, 0}};
+   int aux2[width][height] = {{0, 0, 0, 0, 0, 0, 0, 0, 0},
+                              {0, 0, 0, 1, 1, 1, 0, 0, 0}, 
+                              {0, 0, 0, 1, 1, 1, 0, 0, 0}, 
+                              {0, 1, 1, 1, 1, 1, 1, 1, 0}, 
+                              {0, 1, 1, 1, 1, 1, 1, 1, 0},
+                              {0, 1, 1, 1, 1, 1, 1, 1, 0},
+                              {0, 0, 0, 1, 1, 1, 0, 0, 0},
+                              {0, 0, 0, 1, 1, 1, 0, 0, 0},
+                              {0, 0, 0, 0, 0, 0, 0, 0, 0}};
    for (size_t i = 0; i < width; ++i) {
       for (size_t j = 0; j < height; ++j) {
          image2->pixel[i][j] = aux2[i][j];
@@ -95,17 +99,17 @@ int main() {
    cout << "*debug* before operations" << endl;
 
    // Digital Signal Processing
-   dilatada = imageDilation(image1, mascara2);
+   dilatada = imageDilation(image2, mascara2);
 
-   erosionada = imageErosion(image1, mascara2);
+   erosionada = imageErosion(image2, mascara2);
 
-   apertura = imageOpening(image1, mascara2);
+   apertura = imageOpening(image2, mascara2);
 
-   cerradura = imageClosing(image1, mascara2);
+   cerradura = imageClosing(image2, mascara2);
 
-   gradiente = gradDilationErosion(image1, mascara2);
+   gradiente = gradDilationErosion(image2, mascara2);
 
-   grad2 = gradClosingOpening(image1, mascara2);
+   grad2 = gradClosingOpening(image2, mascara2);
    
    cout << "*debug* displaying results:" << endl;
 
@@ -249,7 +253,7 @@ Image2D* gradDilationErosion(Image2D* inIm, Image2D* mask) {
    Image2D *eIm;  // Eroded image
 
    // dynamic memory allocation
-   grad = setMemoryAllocation(grad, 7, 7);
+   grad = setMemoryAllocation(grad, width, height);
 
    dIm = imageDilation(inIm, mask);
    eIm = imageErosion(inIm, mask);
