@@ -3,6 +3,10 @@
 // **first draft** may contain bugs
 #include <iostream>
 #include <stdlib.h>
+extern "C" {   // include this C library, needed for multithreading
+   #include <pthread.h>
+}
+
 using namespace std;
 
 // 2D array structure
@@ -11,6 +15,12 @@ typedef struct {
    size_t nCols;  // number of columns
    int **pixel;   // image nRows x nCols
 } Image2D;
+
+// arguments' struct to pass them into a thread
+typedef struct {
+   Image2D *imagen1; // image 1
+   Image2D *imagen2; // image 2
+} ArgImage2D;
 
 // image constants
 const int width  = 9;   // image width
@@ -26,6 +36,7 @@ Image2D* gradClosingOpening(Image2D*, Image2D*);
 Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
 int outputImage(Image2D* inImage);
+void* wrapperImageDilation(void*);
 
 int main() {
    Image2D *dilatada;   // dilated pixel
@@ -40,6 +51,9 @@ int main() {
    Image2D *mascara1;   // mask (structuring element)
    Image2D *mascara2;   // mask (structuring element)
 
+   pthread_t  t1;       // thread 1
+   ArgImage2D args;     // argumets to pass into the thread
+   
    cout << "*debug* before setting test images and masks" << endl;
 
    image1 = setMemoryAllocation(image1, width, height);
@@ -58,6 +72,7 @@ int main() {
       }  // end for
    }  // end for
    
+   cout << endl;  // new line
    cout << "*debug* after setting image1" << endl;
    
    image2 = setMemoryAllocation(image2, width, height);
@@ -96,10 +111,20 @@ int main() {
       }  // end for
    }  // end for
 
+   cout << "*debug* setting the image arguments for multithread" << endl;
+
+   // setting the arguments for the thread
+   args.imagen1 = image1;
+   args.imagen2 = mascara2;
+
    cout << "*debug* before operations" << endl;
 
    // Digital Signal Processing
-   dilatada = imageDilation(image2, mascara2);
+   // throw a new thread
+   int create1 = pthread_create(&t1, NULL, wrapperImageDilation, (void*)&args);
+      if (create1 != 0) 
+         cout << "error";
+   //dilatada = imageDilation(image2, mascara2);
 
    erosionada = imageErosion(image2, mascara2);
 
@@ -114,8 +139,8 @@ int main() {
    cout << "*debug* displaying results:" << endl;
 
    // output results
-   outputImage(dilatada);
-   cout << endl;
+   //outputImage(dilatada);
+   //cout << endl;
 
    outputImage(erosionada);
    cout << endl;
@@ -130,9 +155,12 @@ int main() {
    cout << endl;
 
    outputImage(grad2);
-   
+
+   // waiting for threads
+   pthread_join(t1, NULL);
+
    // release memory
-   freeMemory(dilatada);
+   //freeMemory(dilatada);
    freeMemory(erosionada);
    freeMemory(apertura);
    freeMemory(cerradura);
@@ -341,3 +369,24 @@ int outputImage(Image2D* inImage) {
 
    return 0;   // success
 }  // end outputImage function
+
+void* wrapperImageDilation(void* arg) {
+   ArgImage2D *args = (ArgImage2D*)arg;   // arguments
+   Image2D *imWrapped;                    // image wrapped
+
+   // Digital Signal Processing
+   imWrapped = imageDilation(args->imagen1, args->imagen2);
+
+   cout << "*debug* dilation algorithm in thread" << endl;
+
+   cout << "*debug* printing image dilated from the thread" << endl;
+   outputImage(imWrapped);
+   //cout << endl;
+   cout << "*debug* end of printing" << endl;
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}; // end wrapperImageDilation function
+
