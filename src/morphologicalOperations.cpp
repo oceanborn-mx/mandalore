@@ -16,10 +16,11 @@ typedef struct {
    int **pixel;   // image nRows x nCols
 } Image2D;
 
-// arguments' struct to pass them into a thread
+// arguments' structure to pass them into a thread
 typedef struct {
-   Image2D *imagen1; // image 1
-   Image2D *imagen2; // image 2
+   Image2D *imagen1;    // image 1 - argument
+   Image2D *imagen2;    // image 2 - argument
+   Image2D *imFiltered; // image 3 - returned
 } ArgImage2D;
 
 // image constants
@@ -37,6 +38,7 @@ Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
 int outputImage(Image2D* inImage);
 void* wrapperImageDilation(void*);
+void* wrapperImageErosion(void*);
 
 int main() {
    Image2D *dilatada;   // dilated pixel
@@ -51,8 +53,11 @@ int main() {
    Image2D *mascara1;   // mask (structuring element)
    Image2D *mascara2;   // mask (structuring element)
 
-   pthread_t  t1;       // thread 1
-   ArgImage2D args;     // argumets to pass into the thread
+   pthread_t  threadDilation; // thread 1
+   pthread_t  threadErosion;  // thread 2
+
+   ArgImage2D argsDilation;   // argumets to pass into the thread
+   ArgImage2D argsErosion;    // argumets to pass into the thread
    
    cout << "*debug* before setting test images and masks" << endl;
 
@@ -114,19 +119,26 @@ int main() {
    cout << "*debug* setting the image arguments for multithread" << endl;
 
    // setting the arguments for the thread
-   args.imagen1 = image1;
-   args.imagen2 = mascara2;
+   argsDilation.imagen1 = image1;
+   argsDilation.imagen2 = mascara2;
+
+   argsErosion.imagen1 = image1;
+   argsErosion.imagen2 = mascara2;
+
 
    cout << "*debug* before operations" << endl;
 
    // Digital Signal Processing
    // throw a new thread
-   int create1 = pthread_create(&t1, NULL, wrapperImageDilation, (void*)&args);
+   int create1 = pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)&argsDilation);
       if (create1 != 0) 
          cout << "error";
    //dilatada = imageDilation(image2, mascara2);
 
-   erosionada = imageErosion(image2, mascara2);
+   int create2 = pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
+      if (create2 != 0) 
+         cout << "error";
+   //erosionada = imageErosion(image2, mascara2);
 
    apertura = imageOpening(image2, mascara2);
 
@@ -142,8 +154,8 @@ int main() {
    //outputImage(dilatada);
    //cout << endl;
 
-   outputImage(erosionada);
-   cout << endl;
+   //outputImage(erosionada);
+   //cout << endl;
 
    outputImage(cerradura);
    cout << endl;
@@ -157,11 +169,12 @@ int main() {
    outputImage(grad2);
 
    // waiting for threads
-   pthread_join(t1, NULL);
+   pthread_join(threadDilation, NULL);
+   pthread_join(threadErosion, NULL);
 
    // release memory
    //freeMemory(dilatada);
-   freeMemory(erosionada);
+   //freeMemory(erosionada);
    freeMemory(apertura);
    freeMemory(cerradura);
    freeMemory(gradiente);
@@ -372,14 +385,35 @@ int outputImage(Image2D* inImage) {
 
 void* wrapperImageDilation(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
-   Image2D *imWrapped;                    // image wrapped
+   //Image2D *imWrapped;                    // image wrapped
 
    // Digital Signal Processing
-   imWrapped = imageDilation(args->imagen1, args->imagen2);
+   //imWrapped = imageDilation(args->imagen1, args->imagen2);
+   args->imFiltered = imageDilation(args->imagen1, args->imagen2);
 
    cout << "*debug* dilation algorithm in thread" << endl;
 
    cout << "*debug* printing image dilated from the thread" << endl;
+   //outputImage(imWrapped);
+   //cout << endl;
+   cout << "*debug* end of printing" << endl;
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilation function
+
+void* wrapperImageErosion(void* arg) {
+   ArgImage2D *args = (ArgImage2D*)arg;   // arguments
+   Image2D *imWrapped;                    // image wrapped
+
+   // Digital Signal Processing
+   imWrapped = imageErosion(args->imagen1, args->imagen2);
+
+   cout << "*debug* erosion algorithm in thread" << endl;
+
+   cout << "*debug* printing image eroded from the thread" << endl;
    outputImage(imWrapped);
    //cout << endl;
    cout << "*debug* end of printing" << endl;
@@ -388,5 +422,4 @@ void* wrapperImageDilation(void* arg) {
    pthread_exit(NULL);
 
    return 0;   // success
-}; // end wrapperImageDilation function
-
+}  // end wrapperImageDilation function
