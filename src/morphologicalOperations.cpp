@@ -39,13 +39,12 @@ int freeMemory(Image2D*);
 int outputImage(Image2D* inImage);
 void* wrapperImageDilation(void*);
 void* wrapperImageErosion(void*);
+void* wrapperImageOpening(void*);
+void* wrapperImageClosing(void*);
+void* wrapperGradDilationErosion(void*);
+void* wrapperGradClosingOpening(void*);
 
 int main() {
-   Image2D *apertura;   // opened pixel
-   Image2D *cerradura;  // closed pixel
-   Image2D *gradiente;  // gradient: dilated - eroded
-   Image2D *grad2;      // gradiente: closed - opened
-   
    Image2D *image1;     // input image
    Image2D *image2;     // input image
    Image2D *mascara1;   // mask (structuring element)
@@ -53,10 +52,18 @@ int main() {
 
    pthread_t  threadDilation; // thread 1
    pthread_t  threadErosion;  // thread 2
+   pthread_t  threadOpening;  // thread 3
+   pthread_t  threadClosing;  // thread 4
+   pthread_t  threadGDE;      // thread 5
+   pthread_t  threadGCO;      // thread 6
 
    ArgImage2D argsDilation;      // argumets to pass into the thread
    ArgImage2D *argsDilationPtr;  // pointer to argsDilation
    ArgImage2D argsErosion;       // argumets to pass into the thread
+   ArgImage2D argsOpening;       // argumets to pass into the thread
+   ArgImage2D argsClosing;       // argumets to pass into the thread
+   ArgImage2D argsGDE;           // argumets to pass into the thread
+   ArgImage2D argsGCO;           // argumets to pass into the thread
    
    cout << "*debug* before setting test images and masks" << endl;
 
@@ -125,6 +132,17 @@ int main() {
    argsErosion.imagen1 = image1;
    argsErosion.imagen2 = mascara2;
 
+   argsOpening.imagen1 = image1;
+   argsOpening.imagen2 = mascara2;
+
+   argsClosing.imagen1 = image1;
+   argsClosing.imagen2 = mascara2;
+
+   argsGDE.imagen1 = image1;
+   argsGDE.imagen2 = mascara2;
+
+   argsGCO.imagen1 = image1;
+   argsGCO.imagen2 = mascara2;
 
    cout << "*debug* before operations" << endl;
 
@@ -134,21 +152,38 @@ int main() {
       if (create1 != 0) 
          cout << "Error: the thread could not be launched" << endl;
 
+   // throw a new thread
    int create2 = pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
       if (create2 != 0) 
          cout << "Error: the thread could not be launched" << endl;
 
-   apertura = imageOpening(image2, mascara2);
+   // throw a new thread
+   int create3 = pthread_create(&threadOpening, NULL, wrapperImageOpening, (void*)&argsOpening);
+      if (create3 != 0) 
+         cout << "Error: the thread could not be launched" << endl;
 
-   cerradura = imageClosing(image2, mascara2);
+   // throw a new thread
+   int create4 = pthread_create(&threadClosing, NULL, wrapperImageClosing, (void*)&argsClosing);
+      if (create4 != 0) 
+         cout << "Error: the thread could not be launched" << endl;
 
-   gradiente = gradDilationErosion(image2, mascara2);
+   // throw a new thread
+   int create5 = pthread_create(&threadGDE, NULL, wrapperGradDilationErosion, (void*)&argsGDE);
+      if (create5 != 0) 
+         cout << "Error: the thread could not be launched" << endl;
 
-   grad2 = gradClosingOpening(image2, mascara2);
+   // throw a new thread
+   int create6 = pthread_create(&threadGCO, NULL, wrapperGradClosingOpening, (void*)&argsGCO);
+      if (create6 != 0) 
+         cout << "Error: the thread could not be launched" << endl;
 
    // waiting for threads
    pthread_join(threadDilation, NULL);
    pthread_join(threadErosion, NULL);
+   pthread_join(threadOpening, NULL);
+   pthread_join(threadClosing, NULL);
+   pthread_join(threadGDE, NULL);
+   pthread_join(threadGCO, NULL);
    
    cout << "*debug* displaying results:" << endl;
 
@@ -159,24 +194,25 @@ int main() {
    outputImage(argsErosion.imFiltered);
    cout << endl;
 
-   outputImage(cerradura);
+   outputImage(argsOpening.imFiltered);
    cout << endl;
 
-   outputImage(apertura);
+   outputImage(argsClosing.imFiltered);
    cout << endl;
 
-   outputImage(gradiente);
+   outputImage(argsGDE.imFiltered);
    cout << endl;
 
-   outputImage(grad2);
+   outputImage(argsGCO.imFiltered);
+   cout << endl;
 
    // release memory
    freeMemory(argsDilationPtr->imFiltered);
    freeMemory(argsErosion.imFiltered);  
-   freeMemory(apertura);
-   freeMemory(cerradura);
-   freeMemory(gradiente);
-   freeMemory(grad2);
+   freeMemory(argsOpening.imFiltered);
+   freeMemory(argsClosing.imFiltered);
+   freeMemory(argsGDE.imFiltered);
+   freeMemory(argsGCO.imFiltered);
    freeMemory(image1);
    freeMemory(image2);
    freeMemory(mascara1);
@@ -401,6 +437,62 @@ void* wrapperImageErosion(void* arg) {
    args->imFiltered = imageErosion(args->imagen1, args->imagen2);
 
    cout << "*debug* erosion algorithm in thread" << endl;
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilation function
+
+void* wrapperImageOpening(void* arg) {
+   ArgImage2D *args = (ArgImage2D*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->imFiltered = imageOpening(args->imagen1, args->imagen2);
+
+   cout << "*debug* opening algorithm in thread" << endl;
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilation function
+
+void* wrapperImageClosing(void* arg) {
+   ArgImage2D *args = (ArgImage2D*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->imFiltered = imageClosing(args->imagen1, args->imagen2);
+
+   cout << "*debug* closing algorithm in thread" << endl;
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilation function
+
+void* wrapperGradDilationErosion(void* arg) {
+   ArgImage2D *args = (ArgImage2D*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->imFiltered = gradDilationErosion(args->imagen1, args->imagen2);
+
+   cout << "*debug* grad: d - e algorithm in thread" << endl;
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilation function
+
+void* wrapperGradClosingOpening(void* arg) {
+   ArgImage2D *args = (ArgImage2D*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->imFiltered = gradClosingOpening(args->imagen1, args->imagen2);
+
+   cout << "*debug* grad: c - o algorithm in thread" << endl;
 
    // finish the thread
    pthread_exit(NULL);

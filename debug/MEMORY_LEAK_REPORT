@@ -1,8 +1,8 @@
-==10885== Memcheck, a memory error detector
-==10885== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
-==10885== Using Valgrind-3.9.0 and LibVEX; rerun with -h for copyright info
-==10885== Command: ./morphologicalOperations
-==10885== 
+==4282== Memcheck, a memory error detector
+==4282== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
+==4282== Using Valgrind-3.9.0 and LibVEX; rerun with -h for copyright info
+==4282== Command: ./morphologicalOperations
+==4282== 
 *debug* before setting test images and masks
 
 *debug* after setting image1
@@ -12,16 +12,20 @@
 *debug* dilation algorithm
 *debug* dilation algorithm
 *debug* erosion algorithm
+*debug* grad: d - e algorithm in thread
+*debug* dilation algorithm*debug* erosion algorithm
+*debug* dilation algorithm*debug* erosion algorithm*debug* opening algorithm in thread
+
+*debug* erosion algorithm
+*debug* closing algorithm in thread
+
+*debug* dilation algorithm
 *debug* dilation algorithm
 *debug* erosion algorithm
-*debug* erosion algorithm
-*debug* dilation algorithm
-*debug* dilation algorithm
-*debug* erosion algorithm
-*debug* erosion algorithm
-*debug* erosion algorithm in thread
-*debug* dilation algorithm
+*debug* grad: c - o algorithm in thread
+
 *debug* dilation algorithm in thread
+*debug* erosion algorithm in thread
 *debug* displaying results:
 0 0 0 0 0 0 0 0 0 
 0 0 1 1 1 1 1 0 0 
@@ -43,52 +47,53 @@
 0 0 0 0 0 0 0 0 0 
 0 0 0 0 0 0 0 0 0 
 
-0 0 1 1 1 1 1 0 0 
-0 1 1 1 1 1 1 1 0 
-1 1 1 1 1 1 1 1 1 
-1 1 1 1 1 1 1 1 1 
-1 1 1 1 1 1 1 1 1 
-1 1 1 1 1 1 1 1 1 
-1 1 1 1 1 1 1 1 1 
-0 1 1 1 1 1 1 1 0 
-0 0 1 1 1 1 1 0 0 
-
-0 0 0 1 0 1 0 0 0 
-0 0 1 1 1 1 1 0 0 
-0 1 1 1 1 1 1 1 0 
-1 1 1 1 1 1 1 1 1 
-0 1 1 1 1 1 1 1 0 
-1 1 1 1 1 1 1 1 1 
-0 1 1 1 1 1 1 1 0 
-0 0 1 1 1 1 1 0 0 
-0 0 0 1 0 1 0 0 0 
-
-0 0 0 1 1 1 0 0 0 
-0 0 1 0 1 0 1 0 0 
-0 1 0 0 0 0 0 1 0 
-1 0 0 0 0 0 0 0 1 
-1 1 0 0 0 0 0 1 1 
-1 0 0 0 0 0 0 0 1 
-0 1 0 0 0 0 0 1 0 
-0 0 1 0 1 0 1 0 0 
-0 0 0 1 1 1 0 0 0 
-
-0 0 1 0 1 0 1 0 0 
-0 1 0 0 0 0 0 1 0 
-1 0 0 0 0 0 0 0 1 
 0 0 0 0 0 0 0 0 0 
-1 0 0 0 0 0 0 0 1 
+0 0 1 1 1 1 1 0 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 0 1 1 1 1 1 0 0 
 0 0 0 0 0 0 0 0 0 
-1 0 0 0 0 0 0 0 1 
+
+0 0 0 0 0 0 0 0 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 1 1 1 1 1 1 1 0 
+0 0 0 0 0 0 0 0 0 
+
+0 0 0 0 0 0 0 0 0 
+0 0 1 1 1 1 1 0 0 
 0 1 0 0 0 0 0 1 0 
-0 0 1 0 1 0 1 0 0 
+0 1 0 0 0 0 0 1 0 
+0 1 0 0 0 0 0 1 0 
+0 1 0 0 0 0 0 1 0 
+0 1 0 0 0 0 0 1 0 
+0 0 1 1 1 1 1 0 0 
+0 0 0 0 0 0 0 0 0 
+
+0 0 0 0 0 0 0 0 0 
+0 1 0 0 0 0 0 1 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 1 0 0 0 0 0 1 0 
+0 0 0 0 0 0 0 0 0 
+
 *debug* end main
-==10885== 
-==10885== HEAP SUMMARY:
-==10885==     in use at exit: 0 bytes in 0 blocks
-==10885==   total heap usage: 189 allocs, 189 frees, 7,520 bytes allocated
-==10885== 
-==10885== All heap blocks were freed -- no leaks are possible
-==10885== 
-==10885== For counts of detected and suppressed errors, rerun with: -v
-==10885== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 2 from 2)
+==4282== 
+==4282== HEAP SUMMARY:
+==4282==     in use at exit: 0 bytes in 0 blocks
+==4282==   total heap usage: 193 allocs, 193 frees, 8,672 bytes allocated
+==4282== 
+==4282== All heap blocks were freed -- no leaks are possible
+==4282== 
+==4282== For counts of detected and suppressed errors, rerun with: -v
+==4282== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 2 from 2)
