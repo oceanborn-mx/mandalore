@@ -41,8 +41,6 @@ void* wrapperImageDilation(void*);
 void* wrapperImageErosion(void*);
 
 int main() {
-   Image2D *dilatada;   // dilated pixel
-   Image2D *erosionada; // eroded pixel
    Image2D *apertura;   // opened pixel
    Image2D *cerradura;  // closed pixel
    Image2D *gradiente;  // gradient: dilated - eroded
@@ -56,8 +54,9 @@ int main() {
    pthread_t  threadDilation; // thread 1
    pthread_t  threadErosion;  // thread 2
 
-   ArgImage2D argsDilation;   // argumets to pass into the thread
-   ArgImage2D argsErosion;    // argumets to pass into the thread
+   ArgImage2D argsDilation;      // argumets to pass into the thread
+   ArgImage2D *argsDilationPtr;  // pointer to argsDilation
+   ArgImage2D argsErosion;       // argumets to pass into the thread
    
    cout << "*debug* before setting test images and masks" << endl;
 
@@ -118,9 +117,10 @@ int main() {
 
    cout << "*debug* setting the image arguments for multithread" << endl;
 
-   // setting the arguments for the thread
-   argsDilation.imagen1 = image1;
-   argsDilation.imagen2 = mascara2;
+   // setting the arguments for the threads
+   argsDilationPtr = &argsDilation;
+   argsDilationPtr->imagen1 = image1;
+   argsDilationPtr->imagen2 = mascara2;
 
    argsErosion.imagen1 = image1;
    argsErosion.imagen2 = mascara2;
@@ -130,15 +130,13 @@ int main() {
 
    // Digital Signal Processing
    // throw a new thread
-   int create1 = pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)&argsDilation);
+   int create1 = pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)argsDilationPtr);
       if (create1 != 0) 
-         cout << "error";
-   //dilatada = imageDilation(image2, mascara2);
+         cout << "Error: the thread could not be launched" << endl;
 
    int create2 = pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
       if (create2 != 0) 
-         cout << "error";
-   //erosionada = imageErosion(image2, mascara2);
+         cout << "Error: the thread could not be launched" << endl;
 
    apertura = imageOpening(image2, mascara2);
 
@@ -147,15 +145,19 @@ int main() {
    gradiente = gradDilationErosion(image2, mascara2);
 
    grad2 = gradClosingOpening(image2, mascara2);
+
+   // waiting for threads
+   pthread_join(threadDilation, NULL);
+   pthread_join(threadErosion, NULL);
    
    cout << "*debug* displaying results:" << endl;
 
    // output results
-   //outputImage(dilatada);
-   //cout << endl;
+   outputImage(argsDilationPtr->imFiltered);
+   cout << endl;
 
-   //outputImage(erosionada);
-   //cout << endl;
+   outputImage(argsErosion.imFiltered);
+   cout << endl;
 
    outputImage(cerradura);
    cout << endl;
@@ -168,13 +170,9 @@ int main() {
 
    outputImage(grad2);
 
-   // waiting for threads
-   pthread_join(threadDilation, NULL);
-   pthread_join(threadErosion, NULL);
-
    // release memory
-   //freeMemory(dilatada);
-   //freeMemory(erosionada);
+   freeMemory(argsDilationPtr->imFiltered);
+   freeMemory(argsErosion.imFiltered);  
    freeMemory(apertura);
    freeMemory(cerradura);
    freeMemory(gradiente);
@@ -195,7 +193,6 @@ int main() {
 //111111111111111    v
 //111111111111111
 //111111111111111
-
 
 // Dilation
 Image2D* imageDilation(Image2D* inIm, Image2D* mask) {
@@ -233,7 +230,7 @@ Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
    // Erosion algorithm
    for (size_t i = 0; i < width - 2; ++i) {
       for (size_t j = 0; j < height - 2; ++j) {   
-         // TODO: find a way, if any, to make generic the decision mechanism considering any mask->pixel
+         // TODO: find a way, if any, to make generic the decision mechanism considering any mask
          // Mask 1
          //if ((inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & (inIm->pixel[i+0][j+1] & mask->pixel[0][1]) & (inIm->pixel[i+0][j+2] & mask->pixel[0][2]) &
          //    (inIm->pixel[i+1][j+0] & mask->pixel[1][0]) & (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) & (inIm->pixel[i+1][j+2] & mask->pixel[1][2]) &
@@ -363,7 +360,7 @@ Image2D* setMemoryAllocation(Image2D* blockImage, size_t rows, size_t cols) {
 int freeMemory(Image2D* blockImage) {
 
    // freeing memory allocated
-   for (size_t k = 0; k < width; ++k)
+   for (size_t k = 0; k < blockImage->nRows; ++k)
       free(blockImage->pixel[k]);
    free(blockImage->pixel);
    free(blockImage);
@@ -385,18 +382,11 @@ int outputImage(Image2D* inImage) {
 
 void* wrapperImageDilation(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
-   //Image2D *imWrapped;                    // image wrapped
 
    // Digital Signal Processing
-   //imWrapped = imageDilation(args->imagen1, args->imagen2);
    args->imFiltered = imageDilation(args->imagen1, args->imagen2);
 
    cout << "*debug* dilation algorithm in thread" << endl;
-
-   cout << "*debug* printing image dilated from the thread" << endl;
-   //outputImage(imWrapped);
-   //cout << endl;
-   cout << "*debug* end of printing" << endl;
 
    // finish the thread
    pthread_exit(NULL);
@@ -406,17 +396,11 @@ void* wrapperImageDilation(void* arg) {
 
 void* wrapperImageErosion(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
-   Image2D *imWrapped;                    // image wrapped
 
    // Digital Signal Processing
-   imWrapped = imageErosion(args->imagen1, args->imagen2);
+   args->imFiltered = imageErosion(args->imagen1, args->imagen2);
 
    cout << "*debug* erosion algorithm in thread" << endl;
-
-   cout << "*debug* printing image eroded from the thread" << endl;
-   outputImage(imWrapped);
-   //cout << endl;
-   cout << "*debug* end of printing" << endl;
 
    // finish the thread
    pthread_exit(NULL);
