@@ -12,9 +12,9 @@ using namespace std;
 
 // 2D array structure
 typedef struct {
-   size_t nRows;  // number of rows
-   size_t nCols;  // number of columns
-   int **pixel;   // image nRows x nCols
+   size_t nRows;           // number of rows
+   size_t nCols;           // number of columns
+   unsigned int **pixel;   // image nRows x nCols
 } Image2D;
 
 // arguments' structure to pass them into a thread
@@ -29,12 +29,12 @@ const int width  = 9;   // image width
 const int height = 9;   // image height
 
 // prototypes
-Image2D* imageDilation(Image2D*, Image2D*);
-Image2D* imageErosion(Image2D*, Image2D*);
-Image2D* imageOpening(Image2D*, Image2D*);
-Image2D* imageClosing(Image2D*, Image2D*);
-Image2D* gradDilationErosion(Image2D*, Image2D*);
-Image2D* gradClosingOpening(Image2D*, Image2D*);
+Image2D* imageDilation(const Image2D*, const Image2D*);
+Image2D* imageErosion(const Image2D*, const Image2D*);
+Image2D* imageOpening(const Image2D*, const Image2D*);
+Image2D* imageClosing(const Image2D*, const Image2D*);
+Image2D* gradDilationErosion(const Image2D*, const Image2D*);
+Image2D* gradClosingOpening(const Image2D*, const Image2D*);
 Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
 int outputImage(Image2D* inImage);
@@ -154,36 +154,44 @@ int main() {
    cout << "*debug* before operations" << endl;
 #endif
 
+   // threads' status variables
+   int status1;   // status of last system call
+   int status2;   // status of last system call
+   int status3;   // status of last system call
+   int status4;   // status of last system call
+   int status5;   // status of last system call
+   int status6;   // status of last system call
+
    // Digital Signal Processing
    // throw a new thread
-   int status1 = pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)argsDilationPtr);
+   pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)argsDilationPtr);
       if (status1 != 0) 
-         cout << "Error: the thread could not be launched" << endl;
+         cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   int status2 = pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
+   pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
       if (status2 != 0) 
-         cout << "Error: the thread could not be launched" << endl;
+         cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   int status3 = pthread_create(&threadOpening, NULL, wrapperImageOpening, (void*)&argsOpening);
+   pthread_create(&threadOpening, NULL, wrapperImageOpening, (void*)&argsOpening);
       if (status3 != 0) 
-         cout << "Error: the thread could not be launched" << endl;
+         cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   int status4 = pthread_create(&threadClosing, NULL, wrapperImageClosing, (void*)&argsClosing);
+   pthread_create(&threadClosing, NULL, wrapperImageClosing, (void*)&argsClosing);
       if (status4 != 0) 
-         cout << "Error: the thread could not be launched" << endl;
+         cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   int status5 = pthread_create(&threadGDE, NULL, wrapperGradDilationErosion, (void*)&argsGDE);
+   pthread_create(&threadGDE, NULL, wrapperGradDilationErosion, (void*)&argsGDE);
       if (status5 != 0) 
-         cout << "Error: the thread could not be launched" << endl;
+         cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   int status6 = pthread_create(&threadGCO, NULL, wrapperGradClosingOpening, (void*)&argsGCO);
+   pthread_create(&threadGCO, NULL, wrapperGradClosingOpening, (void*)&argsGCO);
       if (status6 != 0) 
-         cout << "Error: the thread could not be launched" << endl;
+         cerr << "Error: the thread could not be launched" << endl;
 
    // waiting for threads
    pthread_join(threadDilation, NULL);
@@ -227,7 +235,18 @@ int main() {
    freeMemory(image2);
    freeMemory(mascara1);
    freeMemory(mascara2);
-   
+
+   // zero pointers after free to avoid reuse
+   argsDilationPtr->imFiltered = NULL;
+   argsErosion.imFiltered = NULL;
+   argsOpening.imFiltered = NULL;
+   argsClosing.imFiltered = NULL;
+   argsGDE.imFiltered = NULL;
+   argsGCO.imFiltered = NULL;
+   image1 = NULL;
+   image2 = NULL;
+   mascara1 = NULL;
+   mascara2 = NULL;
 #ifdef DEBUG
    cout << "*debug* end main" << endl;
 #endif
@@ -243,7 +262,7 @@ int main() {
 //111111111111111
 
 // Dilation
-Image2D* imageDilation(Image2D* inIm, Image2D* mask) {
+Image2D* imageDilation(const Image2D* inIm, const Image2D* mask) {
    Image2D* dIm;   // Dilated image
 
    // dynamic memory allocation
@@ -272,7 +291,7 @@ Image2D* imageDilation(Image2D* inIm, Image2D* mask) {
 }  // end imageDilation function
 
 // Erosion
-Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
+Image2D* imageErosion(const Image2D* inIm, const Image2D* mask) {
    Image2D* eIm;   // Eroded image
 
    // dynamic memory allocation
@@ -309,7 +328,7 @@ Image2D* imageErosion(Image2D* inIm, Image2D* mask) {
 }  // end imageErosion function
 
 // Opening
-Image2D* imageOpening(Image2D* inIm, Image2D* mask) {
+Image2D* imageOpening(const Image2D* inIm, const Image2D* mask) {
    Image2D *oIm;  // Opened image
    Image2D *eIm;  // Eroded image
 
@@ -324,7 +343,7 @@ Image2D* imageOpening(Image2D* inIm, Image2D* mask) {
 }  // end imageOpening function
 
 // Closing
-Image2D* imageClosing(Image2D* inIm, Image2D* mask) {
+Image2D* imageClosing(const Image2D* inIm, const Image2D* mask) {
    Image2D *cIm;  // Closed image
    Image2D *dIm;  // Dilated image
 
@@ -339,7 +358,7 @@ Image2D* imageClosing(Image2D* inIm, Image2D* mask) {
 }  // end imageClosing function
 
 // Gradient: Dilation - Erosion
-Image2D* gradDilationErosion(Image2D* inIm, Image2D* mask) {
+Image2D* gradDilationErosion(const Image2D* inIm, const Image2D* mask) {
    Image2D *grad; // gradient
    Image2D *dIm;  // Dilated image
    Image2D *eIm;  // Eroded image
@@ -365,7 +384,7 @@ Image2D* gradDilationErosion(Image2D* inIm, Image2D* mask) {
 }  // end gradDilationErosion function
 
 // Gradient: Closing - Opening
-Image2D* gradClosingOpening(Image2D* inIm, Image2D* mask) {
+Image2D* gradClosingOpening(const Image2D* inIm, const Image2D* mask) {
    Image2D*grad; // gradient
    Image2D*oIm;  // Opened image
    Image2D*cIm;  // Closed image
@@ -401,10 +420,10 @@ Image2D* setMemoryAllocation(Image2D* blockImage, size_t rows, size_t cols) {
    blockImage->nCols = cols;
 
    // dynamic memory allocation
-   blockImage->pixel = (int**)calloc(blockImage->nRows, sizeof(int*));
+   blockImage->pixel = (unsigned int**)calloc(blockImage->nRows, sizeof(unsigned int*));
 
    for (size_t k = 0; k < blockImage->nRows; ++k) {
-      blockImage->pixel[k] = (int*)calloc(blockImage->nCols, sizeof(int));
+      blockImage->pixel[k] = (unsigned int*)calloc(blockImage->nCols, sizeof(unsigned int));
    }  // end for
 
    return blockImage;
