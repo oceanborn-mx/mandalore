@@ -67,7 +67,7 @@ int main() {
    ArgImage2D argsGCO;           // argumets to pass into the thread
 
 #ifdef DEBUG
-   cout << "*debug* before setting test images and masks" << endl;
+   cout << "## before setting test images and masks" << endl;
 #endif
 
    image1 = setMemoryAllocation(image1, width, height);
@@ -87,7 +87,7 @@ int main() {
    }  // end for
 
 #ifdef DEBUG
-   cout << "*debug* after setting image1" << endl;
+   cout << "## after setting image1" << endl;
 #endif
    
    image2 = setMemoryAllocation(image2, width, height);
@@ -127,7 +127,7 @@ int main() {
    }  // end for
 
 #ifdef DEBUG
-   cout << "*debug* setting the image arguments for multithread" << endl;
+   cout << "## setting the image arguments for multithreading" << endl;
 #endif
 
    // setting the arguments for the threads
@@ -151,7 +151,7 @@ int main() {
    argsGCO.imagen2 = mascara2;
 
 #ifdef DEBUG
-   cout << "*debug* before operations" << endl;
+   cout << "## before operations" << endl;
 #endif
 
    // threads' status variables
@@ -164,32 +164,32 @@ int main() {
 
    // Digital Signal Processing
    // throw a new thread
-   pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)argsDilationPtr);
+   status1 = pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)argsDilationPtr);
       if (status1 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
+   status2 = pthread_create(&threadErosion, NULL, wrapperImageErosion, (void*)&argsErosion);
       if (status2 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   pthread_create(&threadOpening, NULL, wrapperImageOpening, (void*)&argsOpening);
+   status3 = pthread_create(&threadOpening, NULL, wrapperImageOpening, (void*)&argsOpening);
       if (status3 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   pthread_create(&threadClosing, NULL, wrapperImageClosing, (void*)&argsClosing);
+   status4 = pthread_create(&threadClosing, NULL, wrapperImageClosing, (void*)&argsClosing);
       if (status4 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   pthread_create(&threadGDE, NULL, wrapperGradDilationErosion, (void*)&argsGDE);
+   status5 = pthread_create(&threadGDE, NULL, wrapperGradDilationErosion, (void*)&argsGDE);
       if (status5 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
    // throw a new thread
-   pthread_create(&threadGCO, NULL, wrapperGradClosingOpening, (void*)&argsGCO);
+   status6 = pthread_create(&threadGCO, NULL, wrapperGradClosingOpening, (void*)&argsGCO);
       if (status6 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
@@ -202,7 +202,7 @@ int main() {
    pthread_join(threadGCO, NULL);
   
 #ifdef DEBUG
-   cout << "*debug* displaying results:" << endl;
+   cout << "## displaying results:" << endl;
 #endif
 
    // output results
@@ -247,8 +247,9 @@ int main() {
    image2 = NULL;
    mascara1 = NULL;
    mascara2 = NULL;
+   
 #ifdef DEBUG
-   cout << "*debug* end main" << endl;
+   cout << "## end main" << endl;
 #endif
 }  // end main
 
@@ -284,7 +285,7 @@ Image2D* imageDilation(const Image2D* inIm, const Image2D* mask) {
    }  // end for
 
 #ifdef DEBUG
-   cout << "*debug* dilation algorithm" << endl;
+   cout << "## dilation algorithm" << endl;
 #endif
    
    return dIm;
@@ -321,7 +322,7 @@ Image2D* imageErosion(const Image2D* inIm, const Image2D* mask) {
    }  // end for
 
 #ifdef DEBUG
-   cout << "*debug* erosion algorithm" << endl;
+   cout << "## erosion algorithm" << endl;
 #endif
    
    return eIm;
@@ -460,7 +461,7 @@ void* wrapperImageDilation(void* arg) {
    args->imFiltered = imageDilation(args->imagen1, args->imagen2);
 
 #ifdef DEBUG
-   cout << "*debug* dilation algorithm in thread" << endl;
+   cout << "## dilation algorithm in thread" << endl;
 #endif
 
    // finish the thread
@@ -476,7 +477,7 @@ void* wrapperImageErosion(void* arg) {
    args->imFiltered = imageErosion(args->imagen1, args->imagen2);
 
 #ifdef DEBUG
-   cout << "*debug* erosion algorithm in thread" << endl;
+   cout << "## erosion algorithm in thread" << endl;
 #endif
 
    // finish the thread
@@ -492,7 +493,7 @@ void* wrapperImageOpening(void* arg) {
    args->imFiltered = imageOpening(args->imagen1, args->imagen2);
 
 #ifdef DEBUG
-   cout << "*debug* opening algorithm in thread" << endl;
+   cout << "## opening algorithm in thread" << endl;
 #endif
 
    // finish the thread
@@ -508,7 +509,7 @@ void* wrapperImageClosing(void* arg) {
    args->imFiltered = imageClosing(args->imagen1, args->imagen2);
 
 #ifdef DEBUG
-   cout << "*debug* closing algorithm in thread" << endl;
+   cout << "## closing algorithm in thread" << endl;
 #endif
 
    // finish the thread
@@ -524,7 +525,7 @@ void* wrapperGradDilationErosion(void* arg) {
    args->imFiltered = gradDilationErosion(args->imagen1, args->imagen2);
 
 #ifdef DEBUG
-   cout << "*debug* grad: d - e algorithm in thread" << endl;
+   cout << "## grad: d - e algorithm in thread" << endl;
 #endif
 
    // finish the thread
@@ -540,7 +541,7 @@ void* wrapperGradClosingOpening(void* arg) {
    args->imFiltered = gradClosingOpening(args->imagen1, args->imagen2);
 
 #ifdef DEBUG
-   cout << "*debug* grad: c - o algorithm in thread" << endl;
+   cout << "## grad: c - o algorithm in thread" << endl;
 #endif
 
    // finish the thread
