@@ -3,6 +3,7 @@
 // **first draft** may contain bugs
 #include <iostream>
 #include <stdlib.h>
+#include <QtGui/QImage> // Qt library, needed for jpg image handling
 extern "C" {   // include this C library, needed for multithreading
    #include <pthread.h>
 }
@@ -70,6 +71,36 @@ int main() {
    cout << "## before setting test images and masks" << endl;
 #endif
 
+   // loading input image
+   QImage myImage;
+   myImage.load("589_tux_fedora.jpg");
+
+   //for (int x = 0; x < myImage.width(); ++x) {
+   //   for (int y = 0; y < myImage.height(); ++y) {
+         //doSomethingWith(myImage.pixel(x, y));
+   //   }  // end for
+   //}  // end for
+
+#ifdef DEBUG
+   cout << "image width: " << myImage.width() << endl;
+   cout << "image height: " << myImage.height() << endl;
+   cout << "pixel " << hex << myImage.pixel(0, 0) << endl;
+#endif
+
+   QImage *img = new QImage("589_tux_fedora.jpg");
+
+    if(img->isNull())
+        cout << "Image is null" << endl;
+    else
+        cout << "Image loaded" << endl;
+
+#ifdef DEBUG
+   cout << "image width: " << img->width() << endl;
+   cout << "image height: " << img->height() << endl;
+   cout << "pixel " << hex << img->pixel(110, 110) << endl;
+#endif
+
+   // setting the matrices emulating a 2D image
    image1 = setMemoryAllocation(image1, width, height);
    int aux1[width][height] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, 
                               {0, 0, 0, 0, 0, 0, 0, 0, 0}, 
@@ -203,7 +234,6 @@ int main() {
   
 #ifdef DEBUG
    cout << "## displaying results:" << endl;
-#endif
 
    // output results
    outputImage(argsDilationPtr->imFiltered);
@@ -223,6 +253,7 @@ int main() {
 
    outputImage(argsGCO.imFiltered);
    cout << endl;
+#endif
 
    // release memory
    freeMemory(argsDilationPtr->imFiltered);
