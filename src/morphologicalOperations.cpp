@@ -1,9 +1,10 @@
 // morphologicalOperations.cpp
-// Computes the morphological operator upon an image
+// Computes the morphological operators upon a **binary** image
 // **first draft** may contain bugs
 #include <iostream>
 #include <stdlib.h>
 #include <QtGui/QImage> // Qt library, needed for jpg image handling
+#include <QColor>
 extern "C" {   // include this C library, needed for multithreading
    #include <pthread.h>
 }
@@ -45,6 +46,7 @@ void* wrapperImageOpening(void*);
 void* wrapperImageClosing(void*);
 void* wrapperGradDilationErosion(void*);
 void* wrapperGradClosingOpening(void*);
+int imageBinarization(const QImage*);
 
 int main() {
    Image2D *image1;     // input image
@@ -72,21 +74,6 @@ int main() {
 #endif
 
    // loading input image
-   QImage myImage;
-   myImage.load("589_tux_fedora.jpg");
-
-   //for (int x = 0; x < myImage.width(); ++x) {
-   //   for (int y = 0; y < myImage.height(); ++y) {
-         //doSomethingWith(myImage.pixel(x, y));
-   //   }  // end for
-   //}  // end for
-
-#ifdef DEBUG
-   cout << "image width: " << myImage.width() << endl;
-   cout << "image height: " << myImage.height() << endl;
-   cout << "pixel " << hex << myImage.pixel(0, 0) << endl;
-#endif
-
    QImage *img = new QImage("589_tux_fedora.jpg");
 
     if(img->isNull())
@@ -99,7 +86,7 @@ int main() {
    cout << "image height: " << img->height() << endl;
    cout << "pixel " << hex << img->pixel(110, 110) << endl;
 #endif
-
+   
    // setting the matrices emulating a 2D image
    image1 = setMemoryAllocation(image1, width, height);
    int aux1[width][height] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, 
@@ -278,7 +265,10 @@ int main() {
    image2 = NULL;
    mascara1 = NULL;
    mascara2 = NULL;
-   
+ 
+   // imageBinarization
+   imageBinarization(img);
+
 #ifdef DEBUG
    cout << "## end main" << endl;
 #endif
@@ -294,7 +284,7 @@ int main() {
 //111111111111111
 
 // Dilation
-Image2D* imageDilation(const Image2D* inIm, const Image2D* mask) {
+Image2D* imageDilation(const Image2D *const inIm, const Image2D *const mask) {
    Image2D* dIm;   // Dilated image
 
    // dynamic memory allocation
@@ -580,3 +570,42 @@ void* wrapperGradClosingOpening(void* arg) {
 
    return 0;   // success
 }  // end wrapperImageDilation function
+
+// binarization process
+int imageBinarization(const QImage *const imgIn) {
+   // getting the size
+   // the binary image has the same size like the imput image
+   int ancho = imgIn->width();
+   int alto = imgIn->height();
+
+   // Binary image
+   QImage imBin(ancho, alto, QImage::Format_RGB32);
+   QRgb value; // rgb value
+  
+   // threshold
+   for (int x = 0; x < imBin.width(); ++x) {
+      for (int y = 0; y < imBin.height(); ++y) {
+         QColor currentPixel(imgIn->pixel(x, y));  // current pixel
+
+         if (currentPixel.red() > 127) {  // threshold value to umbralize TODO: remove the hard-code
+            value = qRgb(255, 255, 255);  // white
+            imBin.setPixel(x, y, value);
+         }  // end if
+         else {
+            value = qRgb(0, 0, 0);        // black
+            imBin.setPixel(x, y, value);
+         }  // end else
+      }  // end for
+   }  // end for
+
+#ifdef DEBUG
+   // write the image into to a file disk
+   imBin.save("binary.jpg", "jpg");
+#endif
+
+   // TODO: return the binary image outside this function
+   //return imBin;
+   //
+   return 0;   // success
+//
+}  // end imageBinarization function
