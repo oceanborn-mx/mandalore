@@ -34,9 +34,11 @@ const int height = 9;   // image height
 Image2D* imageDilation(const Image2D*, const Image2D*);
 QImage* imageDilation(const QImage*, const Image2D*);
 Image2D* imageErosion(const Image2D*, const Image2D*);
+QImage* imageErosion(const QImage*, const Image2D*);
 Image2D* imageOpening(const Image2D*, const Image2D*);
 Image2D* imageClosing(const Image2D*, const Image2D*);
 Image2D* gradDilationErosion(const Image2D*, const Image2D*);
+QImage* gradDilationErosion(const QImage*, const Image2D*);
 Image2D* gradClosingOpening(const Image2D*, const Image2D*);
 Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
@@ -221,10 +223,14 @@ int main() {
    // testing with jpeg images
    QImage *imagenBin;   // binary jpg image
    QImage *imagenDil;   // dilated jpg image
+   QImage *imagenEro;   // eroded jpg image
+   QImage *imagenGDE;   // gradient: d - e
 
    // digital signal processing
    imagenBin = imageBinarization(img);
    imagenDil = imageDilation(imagenBin, mascara1);
+   imagenEro = imageErosion(imagenBin, mascara1);
+   imagenGDE = gradDilationErosion(imagenBin, mascara1);
 
    // waiting for threads
    pthread_join(threadDilation, NULL);
@@ -271,6 +277,8 @@ int main() {
 
    delete imagenBin;
    delete imagenDil;
+   delete imagenEro;
+   delete imagenGDE;
    delete img;
 
    // zero pointers after free to avoid reuse
@@ -286,6 +294,8 @@ int main() {
    mascara2 = NULL;
    imagenBin = NULL;
    imagenDil = NULL;
+   imagenEro = NULL;
+   imagenGDE = NULL;
    img = NULL;
  
 #ifdef DEBUG
@@ -409,7 +419,7 @@ QImage* imageDilation(const QImage * const inIm, const Image2D * const mask) {
 #endif
 
    return dIm;
-}  // end function template imageDilation
+}  // end overloaded function imageDilation
 
 // Erosion
 Image2D* imageErosion(const Image2D * const inIm, const Image2D * const mask) {
@@ -455,6 +465,88 @@ Image2D* imageErosion(const Image2D * const inIm, const Image2D * const mask) {
    
    return eIm;
 }  // end imageErosion function
+
+// overloaded function imageErosion
+QImage* imageErosion(const QImage * const inIm, const Image2D * const mask) {
+   // getting the size
+   // the binary image has the same size like the imput image
+   int ancho = inIm->width();
+   int alto = inIm->height();
+
+#ifdef DEBUG
+   cout << "## starting: overloaded erosion" << endl;
+   cout << "## input image width: " << dec << ancho << endl;
+   cout << "## input image height: " << dec << alto << endl;
+#endif
+
+   // eroded image
+   QImage *eIm = new QImage(ancho, alto, QImage::Format_RGB32);
+   QRgb val00; // rgb value 
+   QRgb val01; // rgb value
+   QRgb val02; // rgb value
+   QRgb val10; // rgb value
+   QRgb val11; // rgb value
+   QRgb val12; // rgb value
+   QRgb val20; // rgb value
+   QRgb val21; // rgb value
+   QRgb val22; // rgb value
+   
+   // erosion algorithm
+   for (int i = 0; i < inIm->width() - 2; ++i) {
+      for (int j = 0; j < inIm->height() - 2; ++j) {
+         if ((inIm->pixel(i+0,j+0) == mask->pixel[0][0]) && 
+             (inIm->pixel(i+0,j+1) == mask->pixel[0][1]) && 
+             (inIm->pixel(i+0,j+2) == mask->pixel[0][2]) &&
+
+             (inIm->pixel(i+1,j+0) == mask->pixel[1][0]) && 
+             (inIm->pixel(i+1,j+1) == mask->pixel[1][1]) && 
+             (inIm->pixel(i+1,j+2) == mask->pixel[1][2]) &&
+
+             (inIm->pixel(i+2,j+0) == mask->pixel[2][0]) && 
+             (inIm->pixel(i+2,j+1) == mask->pixel[2][1]) && 
+             (inIm->pixel(i+2,j+2) == mask->pixel[2][2])) {
+            for (int m = 0 + i; m < 1 + i; ++m) {
+               for (int n = 0 + j; n < 1 + j; ++n) {
+                  // applying the mask
+                  val00 = inIm->pixel(m+0, n+0) | !mask->pixel[0][0];
+                  val01 = inIm->pixel(m+0, n+1) | !mask->pixel[0][1];
+                  val02 = inIm->pixel(m+0, n+2) | !mask->pixel[0][2];
+
+                  val10 = inIm->pixel(m+1, n+0) | !mask->pixel[1][0];
+                  val11 = mask->pixel[1][1]; // center of the mask
+                  val12 = inIm->pixel(m+1, n+2) | !mask->pixel[1][2];
+
+                  val20 = inIm->pixel(m+2, n+0) | !mask->pixel[2][0];
+                  val21 = inIm->pixel(m+2, n+1) | !mask->pixel[2][1];
+                  val22 = inIm->pixel(m+2, n+2) | !mask->pixel[2][2];
+
+                  // drawing the eroded image
+                  eIm->setPixel(m+0, n+0, val00);
+                  eIm->setPixel(m+0, n+1, val01);
+                  eIm->setPixel(m+0, n+2, val02);
+
+                  eIm->setPixel(m+1, n+0, val10);
+                  eIm->setPixel(m+1, n+1, val11);
+                  eIm->setPixel(m+1, n+2, val12);
+                  
+                  eIm->setPixel(m+2, n+0, val20);
+                  eIm->setPixel(m+2, n+1, val21);
+                  eIm->setPixel(m+2, n+2, val22);
+               }  // end for
+            }  // end for
+         }  // end if
+      }  // end for
+   }  // end for
+
+#ifdef DEBUG
+   // write the image into to a file disk
+   eIm->save("../tests/eroded.jpg", "jpg");
+
+   cout << "## ending: overloaded erosion" << endl;
+#endif
+
+   return eIm;
+}  // end overloaded function imageErosion
 
 // Opening
 Image2D* imageOpening(const Image2D * const inIm, const Image2D * const mask) {
@@ -511,6 +603,52 @@ Image2D* gradDilationErosion(const Image2D * const inIm, const Image2D * const m
 
    return grad;
 }  // end gradDilationErosion function
+
+// overloaded gradDilationErosion 
+QImage* gradDilationErosion(const QImage * const inIm, const Image2D * const mask) {
+   // getting the size
+   // the binary image has the same size like the imput image
+   int ancho = inIm->width();
+   int alto = inIm->height();
+
+#ifdef DEBUG
+   cout << "## starting: overloaded grad: d - e" << endl;
+   cout << "## input image width: " << dec << ancho << endl;
+   cout << "## input image height: " << dec << alto << endl;
+#endif
+
+   // eroded image
+   QImage *grad = new QImage(ancho, alto, QImage::Format_RGB32);
+   QRgb val;   // rgb value 
+
+   QImage *dIm;  // Dilated image
+   QImage *eIm;  // Eroded image
+
+   // getting the dilated and eroded images
+   dIm = imageDilation(inIm, mask);
+   eIm = imageErosion(inIm, mask);
+
+   // algorithm: dilated - eroded
+   for (size_t i = 0; i < inIm->width(); ++i) {
+      for (size_t j = 0; j < inIm->height(); ++j) {
+         val = dIm->pixel(i, j) & ~eIm->pixel(i, j);
+         grad->setPixel(i, j, val); 
+      }  // end for
+   }  // end for
+
+   // release memory
+   delete dIm;
+   delete eIm;
+
+#ifdef DEBUG
+   // write the image into to a file disk
+   grad->save("../tests/grad_d-e.jpg", "jpg");
+
+   cout << "## ending: overloaded grad: d - e" << endl;
+#endif
+
+   return grad;
+}  // end overloaded function gradDilationErosion
 
 // Gradient: Closing - Opening
 Image2D* gradClosingOpening(const Image2D * const inIm, const Image2D * const mask) {
