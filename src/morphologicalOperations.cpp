@@ -40,7 +40,7 @@ Image2D* gradDilationErosion(const Image2D*, const Image2D*);
 Image2D* gradClosingOpening(const Image2D*, const Image2D*);
 Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
-int outputImage(Image2D* inImage);
+int outputImage(const Image2D*);
 void* wrapperImageDilation(void*);
 void* wrapperImageErosion(void*);
 void* wrapperImageOpening(void*);
@@ -219,8 +219,8 @@ int main() {
          cerr << "Error: the thread could not be launched" << endl;
 
    // testing with jpeg images
-   QImage *imagenBin = new QImage;  // binary jpg image
-   QImage *imagenDil = new QImage;  // dilated jpg image
+   QImage *imagenBin;   // binary jpg image
+   QImage *imagenDil;   // dilated jpg image
 
    // digital signal processing
    imagenBin = imageBinarization(img);
@@ -284,6 +284,9 @@ int main() {
    image2 = NULL;
    mascara1 = NULL;
    mascara2 = NULL;
+   imagenBin = NULL;
+   imagenDil = NULL;
+   img = NULL;
  
 #ifdef DEBUG
    cout << "## end main" << endl;
@@ -300,7 +303,7 @@ int main() {
 //111111111111111
 
 // Dilation
-Image2D* imageDilation(const Image2D *const inIm, const Image2D *const mask) {
+Image2D* imageDilation(const Image2D * const inIm, const Image2D * const mask) {
    Image2D* dIm;   // Dilated image
 
    // dynamic memory allocation
@@ -312,9 +315,17 @@ Image2D* imageDilation(const Image2D *const inIm, const Image2D *const mask) {
          if (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) {
             for (size_t m = 0 + i; m < 1 + i; ++m) {
                for (size_t n = 0 + j; n < 1 + j; ++n) {
-                  dIm->pixel[m+0][n+0] |= mask->pixel[0][0], dIm->pixel[m+0][n+1] |= mask->pixel[0][1], dIm->pixel[m+0][n+2] |= mask->pixel[0][2];
-                  dIm->pixel[m+1][n+0] |= mask->pixel[1][0], dIm->pixel[m+1][n+1]  = mask->pixel[1][1], dIm->pixel[m+1][n+2] |= mask->pixel[1][2];
-                  dIm->pixel[m+2][n+0] |= mask->pixel[2][0], dIm->pixel[m+2][n+1] |= mask->pixel[2][1], dIm->pixel[m+2][n+2] |= mask->pixel[2][2];
+                  dIm->pixel[m+0][n+0] |= mask->pixel[0][0]; 
+                  dIm->pixel[m+0][n+1] |= mask->pixel[0][1]; 
+                  dIm->pixel[m+0][n+2] |= mask->pixel[0][2];
+
+                  dIm->pixel[m+1][n+0] |= mask->pixel[1][0];
+                  dIm->pixel[m+1][n+1]  = mask->pixel[1][1];   // center of the mask
+                  dIm->pixel[m+1][n+2] |= mask->pixel[1][2];
+
+                  dIm->pixel[m+2][n+0] |= mask->pixel[2][0];
+                  dIm->pixel[m+2][n+1] |= mask->pixel[2][1];
+                  dIm->pixel[m+2][n+2] |= mask->pixel[2][2];
                }  // end for
             }  // end for
          }  // end if
@@ -329,7 +340,7 @@ Image2D* imageDilation(const Image2D *const inIm, const Image2D *const mask) {
 }  // end imageDilation function
 
 // overloaded function imageDilation
-QImage* imageDilation(const QImage *inIm, const Image2D *mask) {
+QImage* imageDilation(const QImage * const inIm, const Image2D * const mask) {
    // getting the size
    // the binary image has the same size like the imput image
    int ancho = inIm->width();
@@ -376,9 +387,11 @@ QImage* imageDilation(const QImage *inIm, const Image2D *mask) {
                   dIm->setPixel(m+0, n+0, val00);
                   dIm->setPixel(m+0, n+1, val01);
                   dIm->setPixel(m+0, n+2, val02);
+
                   dIm->setPixel(m+1, n+0, val10);
                   dIm->setPixel(m+1, n+1, val11);
                   dIm->setPixel(m+1, n+2, val12);
+                  
                   dIm->setPixel(m+2, n+0, val20);
                   dIm->setPixel(m+2, n+1, val21);
                   dIm->setPixel(m+2, n+2, val22);
@@ -399,7 +412,7 @@ QImage* imageDilation(const QImage *inIm, const Image2D *mask) {
 }  // end function template imageDilation
 
 // Erosion
-Image2D* imageErosion(const Image2D* inIm, const Image2D* mask) {
+Image2D* imageErosion(const Image2D * const inIm, const Image2D * const mask) {
    Image2D* eIm;   // Eroded image
 
    // dynamic memory allocation
@@ -419,9 +432,17 @@ Image2D* imageErosion(const Image2D* inIm, const Image2D* mask) {
              /*(inIm->pixel[i+2][j+0] & mask->pixel[2][0]) & */(inIm->pixel[i+2][j+1] & mask->pixel[2][1]) /*& (inIm->pixel[i+2][j+2] & mask->pixel[2][2])*/) {
             for (size_t m = 0 + i; m < 1 + i; ++m) {
                for (size_t n = 0 + j; n < 1 + j; ++n) {
-                  eIm->pixel[m+0][n+0] |= !mask->pixel[0][0], eIm->pixel[m+0][n+1] |= !mask->pixel[0][1], eIm->pixel[m+0][n+2] |= !mask->pixel[0][2];
-                  eIm->pixel[m+1][n+0] |= !mask->pixel[1][0], eIm->pixel[m+1][n+1]  =  mask->pixel[1][1], eIm->pixel[m+1][n+2] |= !mask->pixel[1][2];
-                  eIm->pixel[m+2][n+0] |= !mask->pixel[2][0], eIm->pixel[m+2][n+1] |= !mask->pixel[2][1], eIm->pixel[m+2][n+2] |= !mask->pixel[2][2];
+                  eIm->pixel[m+0][n+0] |= !mask->pixel[0][0];
+                  eIm->pixel[m+0][n+1] |= !mask->pixel[0][1];
+                  eIm->pixel[m+0][n+2] |= !mask->pixel[0][2];
+
+                  eIm->pixel[m+1][n+0] |= !mask->pixel[1][0];
+                  eIm->pixel[m+1][n+1]  =  mask->pixel[1][1];  // center of the mask
+                  eIm->pixel[m+1][n+2] |= !mask->pixel[1][2];
+
+                  eIm->pixel[m+2][n+0] |= !mask->pixel[2][0];
+                  eIm->pixel[m+2][n+1] |= !mask->pixel[2][1];
+                  eIm->pixel[m+2][n+2] |= !mask->pixel[2][2];
                }  // end for
             }  // end for
          }  // end if
@@ -436,7 +457,7 @@ Image2D* imageErosion(const Image2D* inIm, const Image2D* mask) {
 }  // end imageErosion function
 
 // Opening
-Image2D* imageOpening(const Image2D* inIm, const Image2D* mask) {
+Image2D* imageOpening(const Image2D * const inIm, const Image2D * const mask) {
    Image2D *oIm;  // Opened image
    Image2D *eIm;  // Eroded image
 
@@ -451,7 +472,7 @@ Image2D* imageOpening(const Image2D* inIm, const Image2D* mask) {
 }  // end imageOpening function
 
 // Closing
-Image2D* imageClosing(const Image2D* inIm, const Image2D* mask) {
+Image2D* imageClosing(const Image2D * const inIm, const Image2D * const mask) {
    Image2D *cIm;  // Closed image
    Image2D *dIm;  // Dilated image
 
@@ -466,7 +487,7 @@ Image2D* imageClosing(const Image2D* inIm, const Image2D* mask) {
 }  // end imageClosing function
 
 // Gradient: Dilation - Erosion
-Image2D* gradDilationErosion(const Image2D* inIm, const Image2D* mask) {
+Image2D* gradDilationErosion(const Image2D * const inIm, const Image2D * const mask) {
    Image2D *grad; // gradient
    Image2D *dIm;  // Dilated image
    Image2D *eIm;  // Eroded image
@@ -492,7 +513,7 @@ Image2D* gradDilationErosion(const Image2D* inIm, const Image2D* mask) {
 }  // end gradDilationErosion function
 
 // Gradient: Closing - Opening
-Image2D* gradClosingOpening(const Image2D* inIm, const Image2D* mask) {
+Image2D* gradClosingOpening(const Image2D * const inIm, const Image2D * const mask) {
    Image2D*grad; // gradient
    Image2D*oIm;  // Opened image
    Image2D*cIm;  // Closed image
@@ -549,7 +570,7 @@ int freeMemory(Image2D* blockImage) {
    return 0;   // success
 }  // end freeMemory function
 
-int outputImage(Image2D* inImage) {
+int outputImage(const Image2D * const inImage) {
    
    for (size_t i = 0; i < width; ++i) {
       for (size_t j = 0; j < height; ++j) {
@@ -658,7 +679,7 @@ void* wrapperGradClosingOpening(void* arg) {
 }  // end wrapperImageDilation function
 
 // binarization process
-QImage* imageBinarization(const QImage *const imgIn) {
+QImage* imageBinarization(const QImage * const imgIn) {
    // getting the size
    // the binary image has the same size like the imput image
    int ancho = imgIn->width();
@@ -672,7 +693,7 @@ QImage* imageBinarization(const QImage *const imgIn) {
    for (int x = 0; x < imBin->width(); ++x) {
       for (int y = 0; y < imBin->height(); ++y) {
          QColor currentPixel(imgIn->pixel(x, y));  // current pixel
-
+         // color filter TODO: remove the hard-code filter
          if (currentPixel.blue() > 127) { // threshold value to umbralize TODO: remove the hard-code
             value = qRgb(255, 255, 255);  // white
             imBin->setPixel(x, y, value);
