@@ -75,7 +75,7 @@ int main() {
 #endif
 
    // loading input jpg image
-   QImage *img = new QImage("tux_fedora.jpg");
+   QImage *img = new QImage("../tests/tux_fedora.jpg");
 
     if(img->isNull())
         cout << "Image is null" << endl;
@@ -403,7 +403,7 @@ QImage* imageDilation(const QImage * const inIm, const Image2D * const mask) {
 
 #ifdef DEBUG
    // write the image into to a file disk
-   dIm->save("dilatada.jpg", "jpg");
+   dIm->save("../tests/dilated.jpg", "jpg");
 
    cout << "## ending: overloaded dilation" << endl;
 #endif
@@ -706,7 +706,7 @@ QImage* imageBinarization(const QImage * const imgIn) {
    }  // end for
 
 #ifdef DEBUG
-   imBin->save("binary.jpg", "jpg");
+   imBin->save("../tests/binary.jpg", "jpg");
 #endif
 
    return imBin;
