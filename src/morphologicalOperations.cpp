@@ -32,6 +32,7 @@ const int height = 9;   // image height
 
 // prototypes
 Image2D* imageDilation(const Image2D*, const Image2D*);
+QImage* imageDilation(const QImage*, const Image2D*);
 Image2D* imageErosion(const Image2D*, const Image2D*);
 Image2D* imageOpening(const Image2D*, const Image2D*);
 Image2D* imageClosing(const Image2D*, const Image2D*);
@@ -46,7 +47,7 @@ void* wrapperImageOpening(void*);
 void* wrapperImageClosing(void*);
 void* wrapperGradDilationErosion(void*);
 void* wrapperGradClosingOpening(void*);
-int imageBinarization(const QImage*);
+QImage* imageBinarization(const QImage*);
 
 int main() {
    Image2D *image1;     // input image
@@ -73,8 +74,8 @@ int main() {
    cout << "## before setting test images and masks" << endl;
 #endif
 
-   // loading input image
-   QImage *img = new QImage("589_tux_fedora.jpg");
+   // loading input jpg image
+   QImage *img = new QImage("tux_fedora.jpg");
 
     if(img->isNull())
         cout << "Image is null" << endl;
@@ -84,7 +85,7 @@ int main() {
 #ifdef DEBUG
    cout << "image width: " << img->width() << endl;
    cout << "image height: " << img->height() << endl;
-   cout << "pixel " << hex << img->pixel(110, 110) << endl;
+   cout << "pixel " << hex << (img->pixel(110, 110) & 0x0000FFFF) << endl;
 #endif
    
    // setting the matrices emulating a 2D image
@@ -125,9 +126,15 @@ int main() {
    }  // end for
 
    mascara1 = setMemoryAllocation(mascara1, 3, 3);
-   int aux3[3][3] = {{1, 1, 1},
-                     {1, 1, 1}, 
-                     {1, 1, 1}};
+   //unsigned int aux3[3][3] = {{0xFF000000, 0xFFFFFFFF, 0xFF000000},
+   //                           {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}, 
+   //                           {0xFF000000, 0xFFFFFFFF, 0xFF000000}};
+   unsigned int aux3[3][3] = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
+                              {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}, 
+                              {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}};
+   //unsigned int aux3[3][3] = {{0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF},
+   //                           {0xFF000000, 0xFF000000, 0xFF000000}, 
+   //                           {0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF}};
    for (size_t i = 0; i < 3; ++i) {
       for (size_t j = 0; j < 3; ++j) {
          mascara1->pixel[i][j] = aux3[i][j];
@@ -211,6 +218,14 @@ int main() {
       if (status6 != 0) 
          cerr << "Error: the thread could not be launched" << endl;
 
+   // testing with jpeg images
+   QImage *imagenBin = new QImage;  // binary jpg image
+   QImage *imagenDil = new QImage;  // dilated jpg image
+
+   // digital signal processing
+   imagenBin = imageBinarization(img);
+   imagenDil = imageDilation(imagenBin, mascara1);
+
    // waiting for threads
    pthread_join(threadDilation, NULL);
    pthread_join(threadErosion, NULL);
@@ -254,6 +269,10 @@ int main() {
    freeMemory(mascara1);
    freeMemory(mascara2);
 
+   delete imagenBin;
+   delete imagenDil;
+   delete img;
+
    // zero pointers after free to avoid reuse
    argsDilationPtr->imFiltered = NULL;
    argsErosion.imFiltered = NULL;
@@ -266,9 +285,6 @@ int main() {
    mascara1 = NULL;
    mascara2 = NULL;
  
-   // imageBinarization
-   imageBinarization(img);
-
 #ifdef DEBUG
    cout << "## end main" << endl;
 #endif
@@ -311,6 +327,76 @@ Image2D* imageDilation(const Image2D *const inIm, const Image2D *const mask) {
    
    return dIm;
 }  // end imageDilation function
+
+// overloaded function imageDilation
+QImage* imageDilation(const QImage *inIm, const Image2D *mask) {
+   // getting the size
+   // the binary image has the same size like the imput image
+   int ancho = inIm->width();
+   int alto = inIm->height();
+
+#ifdef DEBUG
+   cout << "## starting: overloaded dilation" << endl;
+   cout << "## input image width: " << dec << ancho << endl;
+   cout << "## input image height: " << dec << alto << endl;
+#endif
+
+   // binary image
+   QImage *dIm = new QImage(ancho, alto, QImage::Format_RGB32);
+   QRgb val00; // rgb value 
+   QRgb val01; // rgb value
+   QRgb val02; // rgb value
+   QRgb val10; // rgb value
+   QRgb val11; // rgb value
+   QRgb val12; // rgb value
+   QRgb val20; // rgb value
+   QRgb val21; // rgb value
+   QRgb val22; // rgb value
+   
+   // dilation algorithm
+   for (int i = 0; i < inIm->width() - 2; ++i) {
+      for (int j = 0; j < inIm->height() - 2; ++j) {
+         if (inIm->pixel(i+1, j+1) == mask->pixel[1][1]) {
+            for (int m = 0 + i; m < 1 + i; ++m) {
+               for (int n = 0 + j; n < 1 + j; ++n) {
+                  // applying the mask
+                  val00 = inIm->pixel(m+0, n+0) | mask->pixel[0][0];
+                  val01 = inIm->pixel(m+0, n+1) | mask->pixel[0][1];
+                  val02 = inIm->pixel(m+0, n+2) | mask->pixel[0][2];
+
+                  val10 = inIm->pixel(m+1, n+0) | mask->pixel[1][0];
+                  val11 = mask->pixel[1][1]; // center of the mask
+                  val12 = inIm->pixel(m+1, n+2) | mask->pixel[1][2];
+
+                  val20 = inIm->pixel(m+2, n+0) | mask->pixel[2][0];
+                  val21 = inIm->pixel(m+2, n+1) | mask->pixel[2][1];
+                  val22 = inIm->pixel(m+2, n+2) | mask->pixel[2][2];
+
+                  // drawing the dilated image
+                  dIm->setPixel(m+0, n+0, val00);
+                  dIm->setPixel(m+0, n+1, val01);
+                  dIm->setPixel(m+0, n+2, val02);
+                  dIm->setPixel(m+1, n+0, val10);
+                  dIm->setPixel(m+1, n+1, val11);
+                  dIm->setPixel(m+1, n+2, val12);
+                  dIm->setPixel(m+2, n+0, val20);
+                  dIm->setPixel(m+2, n+1, val21);
+                  dIm->setPixel(m+2, n+2, val22);
+               }  // end for
+            }  // end for
+         }  // end if
+      }  // end for
+   }  // end for
+
+#ifdef DEBUG
+   // write the image into to a file disk
+   dIm->save("dilatada.jpg", "jpg");
+
+   cout << "## ending: overloaded dilation" << endl;
+#endif
+
+   return dIm;
+}  // end function template imageDilation
 
 // Erosion
 Image2D* imageErosion(const Image2D* inIm, const Image2D* mask) {
@@ -572,40 +658,35 @@ void* wrapperGradClosingOpening(void* arg) {
 }  // end wrapperImageDilation function
 
 // binarization process
-int imageBinarization(const QImage *const imgIn) {
+QImage* imageBinarization(const QImage *const imgIn) {
    // getting the size
    // the binary image has the same size like the imput image
    int ancho = imgIn->width();
    int alto = imgIn->height();
 
    // Binary image
-   QImage imBin(ancho, alto, QImage::Format_RGB32);
+   QImage *imBin = new QImage(ancho, alto, QImage::Format_RGB32);
    QRgb value; // rgb value
-  
+
    // threshold
-   for (int x = 0; x < imBin.width(); ++x) {
-      for (int y = 0; y < imBin.height(); ++y) {
+   for (int x = 0; x < imBin->width(); ++x) {
+      for (int y = 0; y < imBin->height(); ++y) {
          QColor currentPixel(imgIn->pixel(x, y));  // current pixel
 
-         if (currentPixel.red() > 127) {  // threshold value to umbralize TODO: remove the hard-code
+         if (currentPixel.blue() > 127) { // threshold value to umbralize TODO: remove the hard-code
             value = qRgb(255, 255, 255);  // white
-            imBin.setPixel(x, y, value);
+            imBin->setPixel(x, y, value);
          }  // end if
          else {
             value = qRgb(0, 0, 0);        // black
-            imBin.setPixel(x, y, value);
+            imBin->setPixel(x, y, value);
          }  // end else
       }  // end for
    }  // end for
 
 #ifdef DEBUG
-   // write the image into to a file disk
-   imBin.save("binary.jpg", "jpg");
+   imBin->save("binary.jpg", "jpg");
 #endif
 
-   // TODO: return the binary image outside this function
-   //return imBin;
-   //
-   return 0;   // success
-//
+   return imBin;
 }  // end imageBinarization function
