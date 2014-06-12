@@ -26,6 +26,13 @@ typedef struct {
    Image2D *imFiltered; // image 3 - returned
 } ArgImage2D;
 
+// arguments' structure to pass them into a thread
+typedef struct {
+   Image2D *mask;    // argument 1 - mask
+   QImage *inImg;    // argument 2 - input image
+   QImage *outImg;   // returned type: output image
+} ArgQImage;
+
 // TODO: remove these constants, size already contained in the images
 // themselves
 // image constants
@@ -54,6 +61,11 @@ const int MSHAPE_DIAMOND = 1 << 2;  // diamond shape
 const int MSHAPE_OCTO    = 1 << 1;  // octo shape
 const int MSHAPE_FULL    = 1 << 0;  // full shape
 
+// TODO: filters
+const int FRED   = 1 << 2; // red filter
+const int FGREEN = 1 << 1; // green filter
+const int FBLUE  = 1 << 0; // blue filter
+
 // 5x5 shapes
 // MSHAPE_CROSS   MSHAPE_DIAMOND    MSHAPE_OCTO    MSHAPE_FULL
 //        00100            00100          01110          11111
@@ -81,12 +93,19 @@ Image2D* setMemoryAllocation(Image2D*, size_t, size_t);
 int freeMemory(Image2D*);
 int outputImage(const Image2D*);
 void* wrapperImageDilation(void*);
+void* wrapperImageDilationJpg(void*);
 void* wrapperImageErosion(void*);
+void* wrapperImageErosionJpg(void*);
 void* wrapperImageOpening(void*);
+void* wrapperImageOpeningJpg(void*);
 void* wrapperImageClosing(void*);
+void* wrapperImageClosingJpg(void*);
 void* wrapperGradDilationErosion(void*);
+void* wrapperGradDilationErosionJpg(void*);
 void* wrapperGradClosingOpening(void*);
+void* wrapperGradClosingOpeningJpg(void*);
 QImage* imageBinarization(const QImage*);
+void* wrapperImageBinarization(void*);
 
 int main() {
    Image2D *image1;     // input image
@@ -94,12 +113,20 @@ int main() {
    Image2D *mascara1;   // mask (structuring element)
    Image2D *mascara2;   // mask (structuring element)
 
-   pthread_t  threadDilation; // thread 1
-   pthread_t  threadErosion;  // thread 2
-   pthread_t  threadOpening;  // thread 3
-   pthread_t  threadClosing;  // thread 4
-   pthread_t  threadGDE;      // thread 5
-   pthread_t  threadGCO;      // thread 6
+   pthread_t threadDilation; // thread 1
+   pthread_t threadErosion;  // thread 2
+   pthread_t threadOpening;  // thread 3
+   pthread_t threadClosing;  // thread 4
+   pthread_t threadGDE;      // thread 5
+   pthread_t threadGCO;      // thread 6
+
+   pthread_t threadBinarizationJpg; // thread 7
+   pthread_t threadDilationJpg;     // thread 8 
+   pthread_t threadErosionJpg;      // thread 9
+   pthread_t threadOpeningJpg;      // thread 10
+   pthread_t threadClosingJpg;      // thread 11
+   pthread_t threadGDEJpg;          // thread 12
+   pthread_t threadGCOJpg;          // thread 13
 
    ArgImage2D argsDilation;      // argumets to pass into the thread
    ArgImage2D *argsDilationPtr;  // pointer to argsDilation
@@ -108,6 +135,14 @@ int main() {
    ArgImage2D argsClosing;       // argumets to pass into the thread
    ArgImage2D argsGDE;           // argumets to pass into the thread
    ArgImage2D argsGCO;           // argumets to pass into the thread
+
+   ArgQImage argsBinarizationJpg;   // argumets to pass into the thread
+   ArgQImage argsDilationJpg;       // argumets to pass into the thread
+   ArgQImage argsErosionJpg;        // argumets to pass into the thread
+   ArgQImage argsOpeningJpg;        // argumets to pass into the thread
+   ArgQImage argsClosingJpg;        // argumets to pass into the thread
+   ArgQImage argsGDEJpg;            // argumets to pass into the thread
+   ArgQImage argsGCOJpg;            // argumets to pass into the thread
 
 #ifdef DEBUG
    cout << "## before setting test images and masks" << endl;
@@ -165,12 +200,12 @@ int main() {
    }  // end for
 
    mascara1 = setMemoryAllocation(mascara1, 3, 3);
-   unsigned int aux3[3][3] = {{0xFF000000, 0xFFFFFFFF, 0xFF000000},
-                              {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}, 
-                              {0xFF000000, 0xFFFFFFFF, 0xFF000000}};
-   //unsigned int aux3[3][3] = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
+   //unsigned int aux3[3][3] = {{0xFF000000, 0xFFFFFFFF, 0xFF000000},
    //                           {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}, 
-   //                           {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}};
+   //                           {0xFF000000, 0xFFFFFFFF, 0xFF000000}};
+   unsigned int aux3[3][3] = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
+                              {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}, 
+                              {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}};
    //unsigned int aux3[3][3] = {{0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF},
    //                           {0xFF000000, 0xFF000000, 0xFF000000}, 
    //                           {0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF}};
@@ -229,6 +264,14 @@ int main() {
    int status5;   // status of last system call
    int status6;   // status of last system call
 
+   int status7;   // status of last system call
+   int status8;   // status of last system call
+   int status9;   // status of last system call
+   int status10;   // status of last system call
+   int status11;   // status of last system call
+   int status12;   // status of last system call
+   int status13;   // status of last system call
+
    // Digital Signal Processing
    // throw a new thread
    status1 = pthread_create(&threadDilation, NULL, wrapperImageDilation, (void*)argsDilationPtr);
@@ -269,14 +312,77 @@ int main() {
    QImage *imagenGDE;   // gradient: d - e
    QImage *imagenGCO;   // gradient: c - o
 
+   // setting the arguments for the threads
+   argsBinarizationJpg.inImg = img;
+   //argsBinarizationJpg.mask  = mascara1;
+
+   
    // digital signal processing
-   imagenBin = imageBinarization(img);
-   imagenDil = imageDilation(imagenBin, mascara1);
-   imagenEro = imageErosion(imagenBin, mascara1);
-   imagenOpe = imageOpening(imagenBin, mascara1);
-   imagenClo = imageClosing(imagenBin, mascara1);
-   imagenGDE = gradDilationErosion(imagenBin, mascara1);
-   imagenGCO = gradClosingOpening(imagenBin, mascara1);
+   // throw a new thread
+   status7 = pthread_create(&threadBinarizationJpg, NULL, wrapperImageBinarization, (void*)&argsBinarizationJpg);
+      if (status7 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   // waiting for the binarization process
+   pthread_join(threadBinarizationJpg, NULL);
+
+   // setting the arguments for the morphological processes
+   argsDilationJpg.inImg = argsBinarizationJpg.outImg;
+   argsDilationJpg.mask  = mascara1;
+
+   argsErosionJpg.inImg = argsBinarizationJpg.outImg;
+   argsErosionJpg.mask  = mascara1;
+
+   argsOpeningJpg.inImg = argsBinarizationJpg.outImg;
+   argsOpeningJpg.mask  = mascara1;
+
+   argsClosingJpg.inImg = argsBinarizationJpg.outImg;
+   argsClosingJpg.mask  = mascara1;
+
+   argsGDEJpg.inImg = argsBinarizationJpg.outImg;
+   argsGDEJpg.mask  = mascara1;
+
+   argsGCOJpg.inImg = argsBinarizationJpg.outImg;
+   argsGCOJpg.mask  = mascara1;
+
+   // morphological transformations
+   // throw a new thread
+   status8 = pthread_create(&threadDilationJpg, NULL, wrapperImageDilationJpg, (void*)&argsDilationJpg);
+      if (status8 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   // throw a new thread
+   status9 = pthread_create(&threadErosionJpg, NULL, wrapperImageErosionJpg, (void*)&argsErosionJpg);
+      if (status9 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   // throw a new thread
+   status10 = pthread_create(&threadOpeningJpg, NULL, wrapperImageOpeningJpg, (void*)&argsOpeningJpg);
+      if (status10 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   // throw a new thread
+   status11 = pthread_create(&threadClosingJpg, NULL, wrapperImageClosingJpg, (void*)&argsClosingJpg);
+      if (status11 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   // throw a new thread
+   status12 = pthread_create(&threadGDEJpg, NULL, wrapperGradDilationErosionJpg, (void*)&argsGDEJpg);
+      if (status12 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   // throw a new thread
+   status13 = pthread_create(&threadGCOJpg, NULL, wrapperGradClosingOpeningJpg, (void*)&argsGCOJpg);
+      if (status13 != 0) 
+         cerr << "Error: the thread could not be launched" << endl;
+
+   //imagenBin = imageBinarization(img);
+   //imagenDil = imageDilation(imagenBin, mascara1);
+   //imagenEro = imageErosion(imagenBin, mascara1);
+   //imagenOpe = imageOpening(imagenBin, mascara1);
+   //imagenClo = imageClosing(imagenBin, mascara1);
+   //imagenGDE = gradDilationErosion(imagenBin, mascara1);
+   //imagenGCO = gradClosingOpening(imagenBin, mascara1);
 
    // waiting for threads
    pthread_join(threadDilation, NULL);
@@ -285,8 +391,15 @@ int main() {
    pthread_join(threadClosing, NULL);
    pthread_join(threadGDE, NULL);
    pthread_join(threadGCO, NULL);
+
+   pthread_join(threadDilationJpg, NULL);
+   pthread_join(threadErosionJpg, NULL);
+   pthread_join(threadOpeningJpg, NULL);
+   pthread_join(threadClosingJpg, NULL);
+   pthread_join(threadGDEJpg, NULL);
+   pthread_join(threadGCOJpg, NULL);
   
-#ifdef DEBUG
+#ifdef DEBUG_MATRIX
    cout << "## displaying results:" << endl;
 
    // output results
@@ -321,13 +434,13 @@ int main() {
    freeMemory(mascara1);
    freeMemory(mascara2);
 
-   delete imagenBin;
-   delete imagenDil;
-   delete imagenEro;
-   delete imagenOpe;
-   delete imagenClo;
-   delete imagenGDE;
-   delete imagenGCO;
+   //delete imagenBin;
+   //delete imagenDil;
+   //delete imagenEro;
+   //delete imagenOpe;
+   //delete imagenClo;
+   //delete imagenGDE;
+   //delete imagenGCO;
    delete img;
 
    // zero pointers after free to avoid reuse
@@ -489,29 +602,29 @@ Image2D* imageErosion(const Image2D * const inIm, const Image2D * const mask) {
       for (size_t j = 0; j < height - 2; ++j) {   
          // TODO: find a way, if any, to make generic the decision mechanism considering any mask
          // Mask 1
-         //if ((inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & 
-         //    (inIm->pixel[i+0][j+1] & mask->pixel[0][1]) & 
-         //    (inIm->pixel[i+0][j+2] & mask->pixel[0][2]) &
-         //
-         //    (inIm->pixel[i+1][j+0] & mask->pixel[1][0]) & 
-         //    (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) &   // center of the mask
-         //    (inIm->pixel[i+1][j+2] & mask->pixel[1][2]) &
-         //
-         //    (inIm->pixel[i+2][j+0] & mask->pixel[2][0]) & 
-         //    (inIm->pixel[i+2][j+1] & mask->pixel[2][1]) & 
-         //    (inIm->pixel[i+2][j+2] & mask->pixel[2][2])) {
+         if ((inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & 
+             (inIm->pixel[i+0][j+1] & mask->pixel[0][1]) & 
+             (inIm->pixel[i+0][j+2] & mask->pixel[0][2]) &
+         
+             (inIm->pixel[i+1][j+0] & mask->pixel[1][0]) & 
+             (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) &   // center of the mask
+             (inIm->pixel[i+1][j+2] & mask->pixel[1][2]) &
+         
+             (inIm->pixel[i+2][j+0] & mask->pixel[2][0]) & 
+             (inIm->pixel[i+2][j+1] & mask->pixel[2][1]) & 
+             (inIm->pixel[i+2][j+2] & mask->pixel[2][2])) {
          // Mask 2
-         if (/*(inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & */
-               (inIm->pixel[i+0][j+1] & mask->pixel[0][1]) 
-             /* & (inIm->pixel[i+0][j+2] & mask->pixel[0][2])*/ &
+         //if (/*(inIm->pixel[i+0][j+0] & mask->pixel[0][0]) & */
+         //      (inIm->pixel[i+0][j+1] & mask->pixel[0][1]) 
+         //    /* & (inIm->pixel[i+0][j+2] & mask->pixel[0][2])*/ &
 
-               (inIm->pixel[i+1][j+0] & mask->pixel[1][0]) & 
-               (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) &   // center of the mask 
-               (inIm->pixel[i+1][j+2] & mask->pixel[1][2]) &
+         //      (inIm->pixel[i+1][j+0] & mask->pixel[1][0]) & 
+         //      (inIm->pixel[i+1][j+1] & mask->pixel[1][1]) &   // center of the mask 
+         //      (inIm->pixel[i+1][j+2] & mask->pixel[1][2]) &
 
-             /*(inIm->pixel[i+2][j+0] & mask->pixel[2][0]) & */
-               (inIm->pixel[i+2][j+1] & mask->pixel[2][1]) /* & 
-               (inIm->pixel[i+2][j+2] & mask->pixel[2][2])*/) {
+         //    /*(inIm->pixel[i+2][j+0] & mask->pixel[2][0]) & */
+         //      (inIm->pixel[i+2][j+1] & mask->pixel[2][1]) /* & 
+         //      (inIm->pixel[i+2][j+2] & mask->pixel[2][2])*/) {
             for (size_t m = 0 + i; m < 1 + i; ++m) {
                for (size_t n = 0 + j; n < 1 + j; ++n) {
                   eIm->pixel[m+0][n+0] |= !mask->pixel[0][0];
@@ -568,30 +681,29 @@ QImage* imageErosion(const QImage * const inIm, const Image2D * const mask, int 
       for (int j = 0; j < inIm->height() - 2; ++j) {
          // TODO: find a way, if any, to make generic the decision mechanism considering any mask
          // mask 1
-         //if ((inIm->pixel(i+0,j+0) == mask->pixel[0][0]) && 
-         //    (inIm->pixel(i+0,j+1) == mask->pixel[0][1]) && 
-         //    (inIm->pixel(i+0,j+2) == mask->pixel[0][2]) &&
-
-         //    (inIm->pixel(i+1,j+0) == mask->pixel[1][0]) && 
-         //    (inIm->pixel(i+1,j+1) == mask->pixel[1][1]) && // center of the mask 
-         //    (inIm->pixel(i+1,j+2) == mask->pixel[1][2]) &&
-
-         //    (inIm->pixel(i+2,j+0) == mask->pixel[2][0]) && 
-         //    (inIm->pixel(i+2,j+1) == mask->pixel[2][1]) && 
-         //    (inIm->pixel(i+2,j+2) == mask->pixel[2][2])) {
-         // mask 2
-         if (/*(inIm->pixel(i+0,j+0) == mask->pixel[0][0]) && */ 
+         if ((inIm->pixel(i+0,j+0) == mask->pixel[0][0]) && 
              (inIm->pixel(i+0,j+1) == mask->pixel[0][1]) && 
-             /*(inIm->pixel(i+0,j+2) == mask->pixel[0][2]) && */
+             (inIm->pixel(i+0,j+2) == mask->pixel[0][2]) &&
 
              (inIm->pixel(i+1,j+0) == mask->pixel[1][0]) && 
              (inIm->pixel(i+1,j+1) == mask->pixel[1][1]) && // center of the mask 
              (inIm->pixel(i+1,j+2) == mask->pixel[1][2]) &&
 
-             /*(inIm->pixel(i+2,j+0) == mask->pixel[2][0]) && */
-             (inIm->pixel(i+2,j+1) == mask->pixel[2][1]) /* && 
-             (inIm->pixel(i+2,j+2) == mask->pixel[2][2])*/) {
+             (inIm->pixel(i+2,j+0) == mask->pixel[2][0]) && 
+             (inIm->pixel(i+2,j+1) == mask->pixel[2][1]) && 
+             (inIm->pixel(i+2,j+2) == mask->pixel[2][2])) {
+         // mask 2
+         //if (/*(inIm->pixel(i+0,j+0) == mask->pixel[0][0]) && */ 
+         //    (inIm->pixel(i+0,j+1) == mask->pixel[0][1]) && 
+         //    /*(inIm->pixel(i+0,j+2) == mask->pixel[0][2]) && */
 
+         //    (inIm->pixel(i+1,j+0) == mask->pixel[1][0]) && 
+         //    (inIm->pixel(i+1,j+1) == mask->pixel[1][1]) && // center of the mask 
+         //    (inIm->pixel(i+1,j+2) == mask->pixel[1][2]) &&
+
+         //    /*(inIm->pixel(i+2,j+0) == mask->pixel[2][0]) && */
+         //    (inIm->pixel(i+2,j+1) == mask->pixel[2][1]) /* && 
+         //    (inIm->pixel(i+2,j+2) == mask->pixel[2][2])*/) {
             for (int m = 0 + i; m < 1 + i; ++m) {
                for (int n = 0 + j; n < 1 + j; ++n) {
                   // applying the mask
@@ -966,6 +1078,22 @@ void* wrapperImageDilation(void* arg) {
    return 0;   // success
 }  // end wrapperImageDilation function
 
+void* wrapperImageDilationJpg(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = imageDilation(args->inImg, args->mask);
+
+#ifdef DEBUG
+   cout << "## dilation jpeg algorithm in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilationJpg function
+
 void* wrapperImageErosion(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
 
@@ -981,6 +1109,22 @@ void* wrapperImageErosion(void* arg) {
 
    return 0;   // success
 }  // end wrapperImageDilation function
+
+void* wrapperImageErosionJpg(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = imageErosion(args->inImg, args->mask);
+
+#ifdef DEBUG
+   cout << "## erosion jpeg algorithm in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageErosionJpg function
 
 void* wrapperImageOpening(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
@@ -998,6 +1142,22 @@ void* wrapperImageOpening(void* arg) {
    return 0;   // success
 }  // end wrapperImageDilation function
 
+void* wrapperImageOpeningJpg(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = imageOpening(args->inImg, args->mask);
+
+#ifdef DEBUG
+   cout << "## opening jpeg algorithm in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilationJpg function
+
 void* wrapperImageClosing(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
 
@@ -1013,6 +1173,22 @@ void* wrapperImageClosing(void* arg) {
 
    return 0;   // success
 }  // end wrapperImageDilation function
+
+void* wrapperImageClosingJpg(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = imageClosing(args->inImg, args->mask);
+
+#ifdef DEBUG
+   cout << "## closing jpeg algorithm in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilationJpg function
 
 void* wrapperGradDilationErosion(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
@@ -1030,6 +1206,22 @@ void* wrapperGradDilationErosion(void* arg) {
    return 0;   // success
 }  // end wrapperImageDilation function
 
+void* wrapperGradDilationErosionJpg(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = gradDilationErosion(args->inImg, args->mask);
+
+#ifdef DEBUG
+   cout << "## grad: d - e jpeg algorithm in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilationJpg function
+
 void* wrapperGradClosingOpening(void* arg) {
    ArgImage2D *args = (ArgImage2D*)arg;   // arguments
 
@@ -1045,6 +1237,22 @@ void* wrapperGradClosingOpening(void* arg) {
 
    return 0;   // success
 }  // end wrapperImageDilation function
+
+void* wrapperGradClosingOpeningJpg(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = gradClosingOpening(args->inImg, args->mask);
+
+#ifdef DEBUG
+   cout << "## grad: c - o jpeg algorithm in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+}  // end wrapperImageDilationJpg function
 
 // binarization process
 QImage* imageBinarization(const QImage * const imgIn) {
@@ -1079,3 +1287,20 @@ QImage* imageBinarization(const QImage * const imgIn) {
 
    return imBin;
 }  // end imageBinarization function
+
+void* wrapperImageBinarization(void* arg) {
+   ArgQImage *args = (ArgQImage*)arg;   // arguments
+
+   // Digital Signal Processing
+   args->outImg = imageBinarization(args->inImg);
+
+#ifdef DEBUG
+   cout << "## binarization jpg in thread" << endl;
+#endif
+
+   // finish the thread
+   pthread_exit(NULL);
+
+   return 0;   // success
+
+}  // end wrapperImageBinarization function
