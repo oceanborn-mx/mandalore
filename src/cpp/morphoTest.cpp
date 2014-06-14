@@ -18,7 +18,7 @@ int freeMemory(Image2D*);
 
 int main() {
    // loading input jpg image
-   QImage inImage = QImage("tux.jpg");
+   QImage inImage = QImage("../../tests/tux.jpg");
 
     if(inImage.isNull())
         cout << "image is null" << endl;

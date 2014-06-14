@@ -78,7 +78,7 @@ int Morphology::imageBinarization() {
    }  // end for
 
 #ifdef DEBUG
-   imageBinary.save("binary.jpg", "jpg");
+   imageBinary.save("../../tests/binary.jpg", "jpg");
 #endif
 
    return 0;   // success
@@ -137,7 +137,7 @@ int Morphology::imageDilation() {
 #ifdef DEBUG
    // write the image into to a file disk
 //   if (level == 1) { // write the image (default)
-      imageDilated.save("dilated.jpg", "jpg");
+      imageDilated.save("../../tests/dilated.jpg", "jpg");
 //   }  // end if
 //   else  // the function was called from an upper level process
 //      ;// do nothing
@@ -225,7 +225,7 @@ int Morphology::imageErosion() {
 #ifdef DEBUG
    // write the image into to a file disk
 //   if (level == 1) { // write the image (default)
-      imageEroded.save("eroded.jpg", "jpg");
+      imageEroded.save("../../tests/eroded.jpg", "jpg");
 //   }  // end if
 //   else  // the function was called from an upper level process
 //      ;// do nothing
