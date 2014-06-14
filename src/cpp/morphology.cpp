@@ -160,7 +160,7 @@ int Morphology::imageErosion() {
    QRgb val21; // rgb value
    QRgb val22; // rgb value
    
-   // dilation algorithm
+   // erosion algorithm
    for (int i = 0; i < imageOriginal.width() - mask->nRows + 1; ++i) {
       for (int j = 0; j < imageOriginal.height() - mask->nCols + 1; ++j) {
          // TODO: find a way, if any, to make generic the decision mechanism considering any mask
@@ -204,7 +204,7 @@ int Morphology::imageErosion() {
                   val21 = imageBinary.pixel(m+2, n+1) | !mask->pixel[2][1];
                   val22 = imageBinary.pixel(m+2, n+2) | !mask->pixel[2][2];
 
-                  // drawing the dilated image
+                  // drawing the eroded image
                   imageEroded.setPixel(m+0, n+0, val00);
                   imageEroded.setPixel(m+0, n+1, val01);
                   imageEroded.setPixel(m+0, n+2, val02);
