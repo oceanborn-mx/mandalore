@@ -149,7 +149,7 @@ int main() {
 #endif
 
    // loading input jpg image
-   QImage *img = new QImage("../tests/tux_fedora.jpg");
+   QImage *img = new QImage("../tests/tux.jpg");
 
     if(img->isNull())
         cout << "Image is null" << endl;

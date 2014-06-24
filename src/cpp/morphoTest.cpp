@@ -21,14 +21,14 @@ int main() {
    QImage inImage = QImage("../../tests/tux.jpg");
 
     if(inImage.isNull())
-        cout << "image is null" << endl;
+        cout << "## image is null" << endl;
     else
-        cout << "image loaded" << endl;
+        cout << "## image loaded" << endl;
 
 #ifdef DEBUG
-   cout << "image width: " << inImage.width() << endl;
-   cout << "image height: " << inImage.height() << endl;
-   cout << "pixel " << hex << (inImage.pixel(110, 110) & 0x0000FFFF) << endl;
+   cout << "## image width: " << inImage.width() << endl;
+   cout << "## image height: " << inImage.height() << endl;
+   cout << "## pixel(110, 110): " << hex << (inImage.pixel(110, 110) & 0x0000FFFF) << endl;
 #endif
 
    // mask
@@ -53,14 +53,23 @@ int main() {
    // morphological transformations
    Morphology morphoImage = Morphology(inImage, mask);
 
-   morphoImage.setBinaryImage();
-   morphoImage.setDilatedImage();
-   morphoImage.setErodedImage();
+   // binary image
+   QImage imageBin = QImage(inImage.width(), inImage.height(), QImage::Format_RGB32);
+   
+   morphoImage.imageBinarization(inImage);
+   imageBin = morphoImage.getBinaryImage();
+
+   morphoImage.imageGradDilEro(imageBin);
+   morphoImage.imageGradDilOri(imageBin);
+   morphoImage.imageDilation(imageBin);
+   morphoImage.imageErosion(imageBin);
+   morphoImage.imageOpening(imageBin);
+   morphoImage.imageClosing(imageBin);
 
    // release memory
    freeMemory(mask);
    
-   cout << "end of main" << endl;
+   cout << "## end of main" << endl;
 }  // end main
 
 // set dynamic memory allocation

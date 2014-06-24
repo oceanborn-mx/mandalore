@@ -15,33 +15,69 @@ typedef struct {
 
 class Morphology {
    public:
-      // constructor
+      // default constructor
+      Morphology();
+      // overloaded constructor
       Morphology(QImage, Image2D*);
+      // copy constructor
+      //Morphology(Morphology &);
       // destructor
       ~Morphology();
 
       // member functions
-      // performs the binarization of an image
-      void setBinaryImage();
-      // returns the binary image
+      // set binary image
+      void setBinaryImage(QImage);
+      // return binary image
       QImage getBinaryImage() const;
 
-      // performs the dilation of an image
-      void setDilatedImage();
-      // returns the dilated image
+      // set dilated image
+      void setDilatedImage(QImage);
+      // return dilated image
       QImage getDilatedImage() const;
 
-      // performs the erosion of an image
-      void setErodedImage();
-      // returns the eroded image
+      // set eroded image
+      void setErodedImage(QImage);
+      // return eroded image
       QImage getErodedImage() const;
 
-      // performs the binarization algorithm
-      int imageBinarization();
-      // performs the dilation algorithm
-      int imageDilation();
-      // performs the erosion algorithm
-      int imageErosion();
+      // set opened image
+      void setOpenedImage(QImage);
+      // return opened image
+      QImage getOpenedImage() const;
+
+      // set closed image
+      void setClosedImage(QImage);
+      // return closed image
+      QImage getClosedImage() const;
+
+      // set gradient: dilation - erosion
+      void setGradDilEro(QImage);
+      // return gradient: dilation - erosion
+      QImage getGradDilEro() const;
+
+      // set gradient: dilation - original (binarized)
+      void setGradDilOri(QImage);
+      // return gradient: dilation - original (binarized)
+      QImage getGradDilOri() const;
+
+
+      // dilation wrapper
+      //void dilation();
+
+      // perform binarization algorithm
+      int imageBinarization(QImage);
+      // perform dilation algorithm
+      int imageDilation(QImage, int = 1);
+      // perform erosion algorithm
+      int imageErosion(QImage, int = 1);
+      // perform opening algorithm
+      int imageOpening(QImage);
+      // perform closing algorithm
+      int imageClosing(QImage);
+      // perform gradient: dilation - erosion
+      int imageGradDilEro(QImage);
+      // perform gradient: dilation - original (binarized)
+      int imageGradDilOri(QImage);
 
    private:
       Image2D *mask;          // mask
@@ -51,6 +87,8 @@ class Morphology {
       QImage imageEroded;     // eroded image
       QImage imageOpened;     // opened image
       QImage imageClosed;     // closed image
+      QImage imageGDilEro;    // gradient: dilated - eroded
+      QImage imageGDilOri;    // gradient: dilated - original (binarized)
 }; // end class Morphology
 
 #endif
